@@ -1,0 +1,25 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyTorch checkpoints and model weights
+*.pth
+*.pt
+
+# Experiment logs and metrics
+*.log
+*.json
+
+# Data folders
+tfedplat/data/
+tfedplat/pool/
+*.npy
+UnlearningTask/**/backdoors/
+
+# OS / Editor artifacts
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+

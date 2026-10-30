@@ -34,11 +34,14 @@ class FedOSD(fp.UnlearnAlgorithm):
         self.lam = params['adap_lam'] if params is not None and 'adap_lam' in params else 1.0
         self.weight_eta = params['adap_weight_eta'] if params is not None and 'adap_weight_eta' in params else 0.05
         print(f"[DEBUG] Resolved lam={self.lam}, weight_eta={self.weight_eta}")
+        self.save_name += f" lam{self.lam} eta{self.weight_eta}"
 
     def get_weighted_soft_d(self, gr_locals, gu, weights, lam):
         """
             Solves: min_d ||d - gu||^2 + lam * sum_i w_i * (g_i^T d)^2
             via Woodbury identity: d = gu - A^T (W^{-1}/lam + AA^T)^{-1} A gu
+            Normalized gradient directions ensure diag(AA^T) == 1.0, making
+            lambda and per-client weights scale-invariant across any neural architecture.
             As lam -> inf, this converges exactly to FedOSD's original hard
             orthogonality projection: d = gu - A^T(AA^T)^{-1} A gu.
         """
@@ -46,16 +49,17 @@ class FedOSD(fp.UnlearnAlgorithm):
         start_time = time.time()
 
         A = gr_locals                                   # [n, p]
-        n = A.shape[0]
+        row_norms = torch.norm(A, dim=1, keepdim=True) + 1e-8
+        A_norm = A / row_norms
 
-        AAT = A @ A.T                                    # [n, n]
+        AAT = A_norm @ A_norm.T                          # [n, n] with unit diagonal
         inv_lam_w = 1.0 / (lam * weights)                 # [n]
         M = torch.diag(inv_lam_w) + AAT                    # [n, n]
 
-        Agu = A @ gu                                        # [n]
+        Agu = A_norm @ gu                                 # [n]
         inner = torch.linalg.solve(M, Agu.reshape(-1, 1)).reshape(-1)  # [n]
 
-        correction = A.T @ inner                             # [p]
+        correction = A_norm.T @ inner                     # [p]
         d = gu - correction
 
         cal_time = time.time() - start_time
@@ -66,7 +70,7 @@ class FedOSD(fp.UnlearnAlgorithm):
         if self.client_weights is None:
             self.client_weights = {c.id: 1.0 for c in retained_clients}
         if not hasattr(self, 'ema_acc'):
-            self.ema_acc = {}       
+            self.ema_acc = {}
 
         beta = 0.8  # EMA smoothing factor
         for client in retained_clients:
@@ -79,13 +83,19 @@ class FedOSD(fp.UnlearnAlgorithm):
             current_acc = acc_history[-1]
             if cid not in self.ema_acc:
                 self.ema_acc[cid] = current_acc
-                continue
-            prev_ema = self.ema_acc[cid]
-            drop = max(prev_ema - current_acc, 0.0)
-            self.client_weights[cid] *= (1 + self.weight_eta * (drop / 100.0))
-            self.client_weights[cid] *= 0.999  # decay toward 1.0 each round
-            self.client_weights[cid] = min(self.client_weights[cid], 5.0)  # cap
-            self.ema_acc[cid] = beta * prev_ema + (1 - beta) * current_acc
+            else:
+                self.ema_acc[cid] = beta * self.ema_acc[cid] + (1 - beta) * current_acc
+
+        valid_cids = [c.id for c in retained_clients if c.id in self.ema_acc]
+        if len(valid_cids) > 0 and self.weight_eta > 0.0:
+            mean_group_acc = sum(self.ema_acc[cid] for cid in valid_cids) / len(valid_cids)
+            for cid in valid_cids:
+                deficit = max(mean_group_acc - self.ema_acc[cid], 0.0)
+                target_w = 1.0 + self.weight_eta * (deficit / 10.0)
+                # Smooth update toward target_w and decay excess
+                self.client_weights[cid] = 1.0 + (self.client_weights[cid] - 1.0) * 0.95 + (target_w - 1.0) * 0.05
+                self.client_weights[cid] = min(max(self.client_weights[cid], 0.2), 5.0)
+
         if self.current_comm_round % 10 == 0:
             print(f"[weights] round {self.current_comm_round}: {self.client_weights}")            
 
