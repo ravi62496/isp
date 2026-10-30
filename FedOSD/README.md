@@ -160,6 +160,19 @@ The automated script [`plot_results.py`](plot_results.py) compiles the JSON expe
 
 ---
 
+### 3.4 Multi-Client Federated Unlearning ($U_N = 2, 3$)
+
+In enterprise and healthcare FL settings, multiple clients frequently exercise their "right to be forgotten" in batches:
+- **The Challenge**: Standard FedOSD enforces hard orthogonality against the retained gradient subspace $\mathcal{C}_{\text{retained}}$. When removing $K \ge 2$ clients simultaneously, the aggregated unlearning gradient $g_u = \frac{1}{K} \sum_{k=1}^K g_{u_k}$ must simultaneously navigate non-conflicting descent with multiple differing local distributions. Hard orthogonality severely shrinks the admissible parameter subspace, leading to sharp accuracy drops on overlapping retained clients.
+- **The Adaptive Soft Advantage**: By allowing controlled soft relaxation ($\lambda \approx 20.0$), Adaptive FedOSD permits harmless tangential updates along non-vulnerable client dimensions while focusing strong protection ($w_i > 2.0$) exclusively on retained clients that share overlapping classes with the unlearned clients.
+
+#### Multi-Client Experimental Protocol:
+- **Dataset**: Non-IID CIFAR-10, 10 clients, $U_N = 2$ unlearned clients (Clients 2 and 4 simultaneously).
+- **Execution Pipeline**: Automated via [`run_un2_experiments.bat`](run_un2_experiments.bat) / [`run_un2_experiments.sh`](run_un2_experiments.sh).
+- **Comparative Analysis**: Evaluated using [`evaluate_multiclient.py`](evaluate_multiclient.py).
+
+---
+
 ### Core Findings & Theoretical Validation
 1. **Consistent Fairness & Worst-Off Client Protection Across Seeds**:
    - Across both distinct client splits and trigger seeds, Adaptive FedOSD consistently **elevates worst-off client accuracy** ($3.65\% \to 4.80\%$ cross-seed mean, a $+31.5\%$ relative lift).
@@ -196,8 +209,11 @@ FedOSD/
 ├── run_sweep.bat                      # Automated GPU hyperparameter sweep (Windows)
 ├── run_sweep.sh                       # Automated GPU hyperparameter sweep (Linux)
 ├── run_seed2_experiments.bat          # Automated seed 2 validation pipeline
+├── run_un2_experiments.bat            # Automated multi-client (UN=2) pipeline (Windows)
+├── run_un2_experiments.sh             # Automated multi-client (UN=2) pipeline (Linux)
 ├── evaluate_experiments.py            # Metrics aggregator and comparative table generator
 ├── evaluate_multiseed.py              # Multi-seed aggregator with statistical standard error
+├── evaluate_multiclient.py            # Multi-client (UN=1 vs UN=2) benchmark analyzer (Goal 3)
 ├── plot_results.py                    # Publication-grade visualization generator (Goal 2)
 ├── .gitignore                         # Clean version control exclusions
 └── README.md                          # Comprehensive documentation
