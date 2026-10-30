@@ -188,6 +188,14 @@ class Algorithm:
             if callable(self.outFunc):
                 self.outFunc(self)
         
+        if self.save_model and self.current_comm_round > 0 and self.current_comm_round % 100 == 0:
+            model_save_name = self.model_save_name if self.model_save_name is not None else self.save_folder + self.save_name + '.pth'
+            save_dir = os.path.dirname(model_save_name)
+            if save_dir and not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+            torch.save(self.module.model.state_dict(), model_save_name)
+            print(f'[CHECKPOINT] Saved periodic model checkpoint at round {self.current_comm_round} to {model_save_name}')
+        
         self.order_free_memory()
         if self.current_comm_round >= self.max_comm_round or self.current_training_num >= self.max_training_num:
             if self.current_comm_round % self.test_interval != 0:
