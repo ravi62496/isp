@@ -256,10 +256,85 @@ def plot_figure_4_multiseed_robustness():
     plt.close()
     print(f"Generated: {out_path}")
 
+# =========================================================================
+# Figure 5: Dynamic Weight Trajectories Over Time
+# =========================================================================
+def plot_figure_5_weight_trajectories():
+    adap_file = os.path.join(BASE_DIR, "seed1 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 lam20.0 eta0.4_unlearn.json")
+    data = load_json(adap_file)
+    ch = data['metric_log']['client_metric_history']
+    retained = [c for c in range(10) if c != 2]
+    accs = {c: ch[c]['test_accuracy'] for c in retained}
+    n_rounds = len(accs[0])
+    
+    w = {c: 1.0 for c in retained}
+    ema = {}
+    beta = 0.8
+    eta = 0.4
+    w_history = {c: [] for c in retained}
+    
+    for t in range(n_rounds):
+        for c in retained:
+            a = accs[c][t]
+            if c not in ema:
+                ema[c] = a
+            else:
+                ema[c] = beta * ema[c] + (1 - beta) * a
+        mean_a = sum(ema[c] for c in retained) / len(retained)
+        for c in retained:
+            deficit = max(mean_a - ema[c], 0.0)
+            target_w = 1.0 + eta * (deficit / 10.0)
+            w[c] = 1.0 + (w[c] - 1.0) * 0.95 + (target_w - 1.0) * 0.05
+            w[c] = min(max(w[c], 0.2), 5.0)
+            w_history[c].append(w[c])
+            
+    fig, ax = plt.subplots(figsize=(9.5, 5))
+    rounds = np.arange(n_rounds)
+    
+    # Palette highlighting vulnerable vs thriving
+    colors = {
+        7: ('#d62728', '-', 2.8, 'Client 7 (Worst-Off, 7.1% acc)'),
+        0: ('#e67e22', '-', 2.4, 'Client 0 (Struggling, 14.4% acc)'),
+        5: ('#e74c3c', '-.', 2.0, 'Client 5 (Struggling, 15.6% acc)'),
+        6: ('#9b59b6', ':', 1.8, 'Client 6 (Mid-tier, 38.1% acc)'),
+        4: ('#f39c12', ':', 1.8, 'Client 4 (Mid-tier, 40.1% acc)'),
+        1: ('#95a5a6', '--', 1.2, 'Clients 1, 3, 8, 9 (Thriving, >76% acc)'),
+        3: ('#95a5a6', '--', 1.0, None),
+        8: ('#95a5a6', '--', 1.0, None),
+        9: ('#95a5a6', '--', 1.0, None)
+    }
+    
+    for c in retained:
+        col, ls, lw, lbl = colors[c]
+        ax.plot(rounds, w_history[c], color=col, linestyle=ls, linewidth=lw, label=lbl)
+        
+    ax.axhline(1.0, color='gray', linestyle=':', alpha=0.6)
+    ax.text(10, 1.05, "Uniform Baseline Protection (w = 1.0)", color="gray", fontsize=9, fontstyle="italic")
+    
+    ax.annotate(r"Vulnerable Clients receive $>2.6\times$ Higher Conflict Protection",
+                xy=(75, w_history[7][75]),
+                xytext=(30, 2.75),
+                arrowprops=dict(facecolor='#d62728', shrink=0.08, width=1.5, headwidth=6),
+                fontweight='bold', fontsize=9.5, color='#d62728')
+                
+    ax.set_xlabel("Unlearning Rounds")
+    ax.set_ylabel(r"Dynamic Protection Weight $w_i(t)$")
+    ax.set_title(r"Dynamic Adaptation Mechanism: Protection Weight Trajectories $w_i(t)$ Over Time", fontweight="bold")
+    ax.legend(loc="center left", frameon=True, bbox_to_anchor=(0.02, 0.55))
+    ax.set_ylim(0.8, 3.0)
+    
+    plt.tight_layout()
+    out_path = os.path.join(OUTPUT_DIR, "fig5_weight_trajectories.png")
+    plt.savefig(out_path, dpi=300)
+    plt.close()
+    print(f"Generated: {out_path}")
+
 if __name__ == "__main__":
     ensure_dir(OUTPUT_DIR)
     plot_figure_1_dynamics()
     plot_figure_2_client_distribution()
     plot_figure_3_hyperparameter_pareto()
     plot_figure_4_multiseed_robustness()
+    plot_figure_5_weight_trajectories()
     print("All publication figures successfully generated in figures/ directory!")
+

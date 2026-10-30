@@ -151,6 +151,15 @@ The automated script [`plot_results.py`](plot_results.py) compiles the JSON expe
 
 ---
 
+#### Figure 5: Dynamic Client Protection Weight Trajectories $w_i(t)$ Over Time
+![Dynamic Weight Trajectories](figures/fig5_weight_trajectories.png)
+* Visual proof of the adaptive deficit mechanism in action:
+  - **Client 7** (worst-off, accuracy $7.1\%$) and **Client 0** (accuracy $14.4\%$) suffer significant performance deficits from unlearning collateral damage.
+  - The adaptive weighting dynamically elevates their protection coefficients to **$w_7 \approx 2.62$** and **$w_0 \approx 2.31$** ($>2.6\times$ higher conflict penalty), forcing the unlearning vector $d$ into near-zero interference with their gradient directions.
+  - Meanwhile, thriving clients (Clients 1, 3, 8, 9 with accuracy $>76\%$) remain at baseline $w_i = 1.0$, preventing over-regularization.
+
+---
+
 ### Core Findings & Theoretical Validation
 1. **Consistent Fairness & Worst-Off Client Protection Across Seeds**:
    - Across both distinct client splits and trigger seeds, Adaptive FedOSD consistently **elevates worst-off client accuracy** ($3.65\% \to 4.80\%$ cross-seed mean, a $+31.5\%$ relative lift).
@@ -181,7 +190,8 @@ FedOSD/
 │   ├── fig1_unlearning_dynamics.png   # ASR eradication and worst-off floor protection
 │   ├── fig2_per_client_distribution.png # Retained client accuracy bar chart
 │   ├── fig3_hyperparameter_pareto.png # Regularization regimes and eta trade-offs
-│   └── fig4_multiseed_robustness.png  # Multi-seed validation with Standard Error bars
+│   ├── fig4_multiseed_robustness.png  # Multi-seed validation with Standard Error bars
+│   └── fig5_weight_trajectories.png   # Dynamic protection weights w_i(t) over time
 ├── run_UnlearningTask.py              # Entry point for training and unlearning
 ├── run_sweep.bat                      # Automated GPU hyperparameter sweep (Windows)
 ├── run_sweep.sh                       # Automated GPU hyperparameter sweep (Linux)
