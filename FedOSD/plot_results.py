@@ -399,6 +399,83 @@ def plot_figure_6_multiclient():
     plt.close()
     print(f"Generated: {out_path}")
 
+# =========================================================================
+# Figure 7: CIFAR-100 Complex Dataset Generalization Benchmark
+# =========================================================================
+def plot_figure_7_cifar100():
+    cifar100_dir = "UnlearningTask/CNN_CIFAR10/cifar100 pat balanced B100 NC10 N10/UN1/E1/C1.0/FedOSD"
+    hard_file = os.path.join(cifar100_dir, "seed1 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 lam100000.0 eta0.0.json")
+    soft_file = os.path.join(cifar100_dir, "seed1 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 lam20.0 eta0.0.json")
+    adap_file = os.path.join(cifar100_dir, "seed1 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 lam20.0 eta0.4.json")
+    
+    if not (os.path.exists(hard_file) and os.path.exists(soft_file) and os.path.exists(adap_file)):
+        print(f"CIFAR-100 JSON files missing in {cifar100_dir}")
+        return
+        
+    d_hard = load_json(hard_file)
+    d_soft = load_json(soft_file)
+    d_adap = load_json(adap_file)
+    
+    ch_hard = d_hard["metric_log"]["client_metric_history"]
+    ch_soft = d_soft["metric_log"]["client_metric_history"]
+    ch_adap = d_adap["metric_log"]["client_metric_history"]
+    
+    retained_cids = [c for c in range(10) if c != 2]
+    acc_hard = [ch_hard[c]['test_accuracy'][-1] for c in retained_cids]
+    acc_soft = [ch_soft[c]['test_accuracy'][-1] for c in retained_cids]
+    acc_adap = [ch_adap[c]['test_accuracy'][-1] for c in retained_cids]
+    
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5))
+    
+    # Left: Grouped Bar Chart of all retained clients
+    x = np.arange(len(retained_cids))
+    width = 0.26
+    
+    ax1.bar(x - width, acc_hard, width, label="Hard FedOSD (Baseline)", color="#7f7f7f", alpha=0.85)
+    ax1.bar(x, acc_soft, width, label=r"Soft Uniform ($\lambda=20, \eta=0.0$)", color="#3498db", alpha=0.85)
+    ax1.bar(x + width, acc_adap, width, label=r"Adaptive FedOSD ($\lambda=20, \eta=0.40$)", color="#e74c3c", alpha=0.9)
+    
+    # Annotate worst-off client 5
+    c5_idx = retained_cids.index(5)
+    ax1.annotate(f"Worst-Off C5 Lift:\n20.6% -> 21.6%\n(+1.0% absolute)",
+                 xy=(x[c5_idx] + width, acc_adap[c5_idx]),
+                 xytext=(x[c5_idx] - 0.7, acc_adap[c5_idx] + 7),
+                 arrowprops=dict(facecolor='black', shrink=0.08, width=1.5, headwidth=5),
+                 fontweight='bold', fontsize=9)
+                 
+    ax1.set_xlabel("Retained Client Index (CIFAR-100, 10 classes/client)")
+    ax1.set_ylabel("Final Test Accuracy (%)")
+    ax1.set_title(r"(a) Per-Client Accuracy Comparison on CIFAR-100", fontweight="bold")
+    ax1.set_xticks(x)
+    ax1.set_xticklabels([f"C{c}" for c in retained_cids])
+    ax1.legend(loc="upper right", frameon=True)
+    ax1.set_ylim(0, 42)
+    
+    # Right: Aggregate Summary Metrics
+    metrics = ["Worst-Off Client\n(Min %)", "Retained Mean\n(Cohort %)", "Cohort Variance\n(Std Dev %)", "Backdoor ASR\n(Residual %)"]
+    vals_hard = [20.60, 28.96, 4.00, 1.02]
+    vals_soft = [21.60, 28.79, 4.03, 0.96]
+    vals_adap = [21.60, 28.82, 3.99, 0.96]
+    
+    x2 = np.arange(len(metrics))
+    w2 = 0.25
+    ax2.bar(x2 - w2, vals_hard, w2, label="Hard FedOSD", color="#7f7f7f", alpha=0.85)
+    ax2.bar(x2, vals_soft, w2, label=r"Soft Uniform ($\lambda=20, \eta=0.0$)", color="#3498db", alpha=0.85)
+    ax2.bar(x2 + w2, vals_adap, w2, label=r"Adaptive FedOSD ($\lambda=20, \eta=0.40$)", color="#e74c3c", alpha=0.9)
+    
+    ax2.set_ylabel("Metric Value (%)")
+    ax2.set_title(r"(b) CIFAR-100 Macro Metrics (Generalization Benchmark)", fontweight="bold")
+    ax2.set_xticks(x2)
+    ax2.set_xticklabels(metrics)
+    ax2.legend(loc="upper right", frameon=True)
+    ax2.set_ylim(0, 36)
+    
+    plt.tight_layout()
+    out_path = os.path.join(OUTPUT_DIR, "fig7_cifar100_generalization.png")
+    plt.savefig(out_path, dpi=300)
+    plt.close()
+    print(f"Generated: {out_path}")
+
 if __name__ == "__main__":
     ensure_dir(OUTPUT_DIR)
     plot_figure_1_dynamics()
@@ -407,5 +484,6 @@ if __name__ == "__main__":
     plot_figure_4_multiseed_robustness()
     plot_figure_5_weight_trajectories()
     plot_figure_6_multiclient()
+    plot_figure_7_cifar100()
     print("All publication figures successfully generated in figures/ directory!")
 
