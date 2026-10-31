@@ -195,6 +195,16 @@ Under batch unlearning of Clients 2 and 4, Adaptive FedOSD actively lifted every
 
 ---
 
+### 3.5 Complex Dataset Generalization: CIFAR-100 Benchmark
+
+To verify that Adaptive FedOSD is dataset- and architecture-agnostic, we evaluate federated unlearning on **CIFAR-100** (`DataLoader_cifar100_pat`):
+- **Scale**: 100 fine-grained visual categories (compared to 10 classes in CIFAR-10).
+- **Partition**: 10 clients, each assigned 10 distinct classes in a pathological non-IID partition ($N=10, NC=10$).
+- **Challenge**: The higher category complexity creates sharper gradient conflicts during unlearning, amplifying the collateral damage on retained clients under rigid hard orthogonality.
+- **Pipeline Scripts**: Automated via [`run_cifar100_experiments.bat`](run_cifar100_experiments.bat) / [`run_cifar100_experiments.sh`](run_cifar100_experiments.sh) and analyzed via [`evaluate_cifar100.py`](evaluate_cifar100.py).
+
+---
+
 ### Core Findings & Theoretical Validation
 1. **Consistent Fairness & Worst-Off Client Protection Across Seeds**:
    - Across both distinct client splits and trigger seeds, Adaptive FedOSD consistently **elevates worst-off client accuracy** ($3.65\% \to 4.80\%$ cross-seed mean, a $+31.5\%$ relative lift).
@@ -234,9 +244,12 @@ FedOSD/
 ├── run_seed2_experiments.bat          # Automated seed 2 validation pipeline
 ├── run_un2_experiments.bat            # Automated multi-client (UN=2) pipeline (Windows)
 ├── run_un2_experiments.sh             # Automated multi-client (UN=2) pipeline (Linux)
+├── run_cifar100_experiments.bat        # Automated CIFAR-100 benchmark pipeline (Windows)
+├── run_cifar100_experiments.sh         # Automated CIFAR-100 benchmark pipeline (Linux)
 ├── evaluate_experiments.py            # Metrics aggregator and comparative table generator
 ├── evaluate_multiseed.py              # Multi-seed aggregator with statistical standard error
 ├── evaluate_multiclient.py            # Multi-client (UN=1 vs UN=2) benchmark analyzer (Goal 3)
+├── evaluate_cifar100.py               # CIFAR-100 benchmark metrics analyzer (Goal 4)
 ├── plot_results.py                    # Publication-grade visualization generator (Goal 2)
 ├── .gitignore                         # Clean version control exclusions
 └── README.md                          # Comprehensive documentation
