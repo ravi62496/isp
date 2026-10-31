@@ -72,3 +72,4 @@ def evaluate_cifar100(base_dir="UnlearningTask/CNN_CIFAR10/cifar100 pat balanced
 
 if __name__ == "__main__":
     evaluate_cifar100()
+
