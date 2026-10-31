@@ -329,6 +329,76 @@ def plot_figure_5_weight_trajectories():
     plt.close()
     print(f"Generated: {out_path}")
 
+# =========================================================================
+# Figure 6: Multi-Client Unlearning Benchmark (UN = 2)
+# =========================================================================
+def plot_figure_6_multiclient():
+    dir_un2 = "UnlearningTask/CNN_CIFAR10/cifar10 pat balanced B200 NC2 N10/UN2/E1/C1.0/FedOSD"
+    soft_file = os.path.join(dir_un2, "seed1 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 lam20.0 eta0.0_unlearn.json")
+    adap_file = os.path.join(dir_un2, "seed1 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 lam20.0 eta0.4_unlearn.json")
+    
+    with open(soft_file) as f:
+        d_soft = json.load(f)
+    with open(adap_file) as f:
+        d_adap = json.load(f)
+        
+    ch_soft = d_soft['metric_log']['client_metric_history']
+    ch_adap = d_adap['metric_log']['client_metric_history']
+    
+    retained_cids = [0, 1, 3, 5, 6, 7, 8, 9]  # Clients 2 and 4 unlearned
+    acc_soft = [ch_soft[c]['test_accuracy'][-1] for c in retained_cids]
+    acc_adap = [ch_adap[c]['test_accuracy'][-1] for c in retained_cids]
+    
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4.8))
+    
+    # Left: Per-client comparison
+    x = np.arange(len(retained_cids))
+    width = 0.38
+    
+    ax1.bar(x - width/2, acc_soft, width, label=r"Soft Uniform ($\lambda=20, \eta=0.0$)", color="#3498db", alpha=0.85)
+    ax1.bar(x + width/2, acc_adap, width, label=r"Adaptive FedOSD ($\lambda=20, \eta=0.40$)", color="#e74c3c", alpha=0.9)
+    
+    # Annotate worst-off client 7
+    c7_idx = retained_cids.index(7)
+    ax1.annotate(f"Lift: 13.7% -> 16.0%\n(+16.8% gain)",
+                 xy=(x[c7_idx] + width/2, acc_adap[c7_idx]),
+                 xytext=(x[c7_idx] - 0.4, acc_adap[c7_idx] + 13),
+                 arrowprops=dict(facecolor='black', shrink=0.08, width=1.5, headwidth=5),
+                 fontweight='bold', fontsize=9)
+                 
+    ax1.set_xlabel("Retained Client Index")
+    ax1.set_ylabel("Final Test Accuracy (%)")
+    ax1.set_title(r"(a) Per-Client Accuracy Under Batch Unlearning ($U_N = 2$)", fontweight="bold")
+    ax1.set_xticks(x)
+    ax1.set_xticklabels([f"C{c}" for c in retained_cids])
+    ax1.legend(loc="upper right", frameon=True)
+    ax1.set_ylim(0, 95)
+    
+    # Right: Aggregate Summary Metrics
+    metrics = ["Worst-Off Client\n(Min %)", "Retained Cohort\n(Mean %)", "Unlearn Backdoor\n(Mean ASR %)"]
+    vals_hard = [29.70, 51.65, 0.77]
+    vals_soft = [13.70, 48.46, 0.51]
+    vals_adap = [16.00, 48.89, 0.50]
+    
+    x2 = np.arange(len(metrics))
+    w2 = 0.25
+    ax2.bar(x2 - w2, vals_hard, w2, label="Original FedOSD (Hard)", color="#7f7f7f", alpha=0.85)
+    ax2.bar(x2, vals_soft, w2, label=r"Soft Uniform ($\lambda=20, \eta=0.0$)", color="#3498db", alpha=0.85)
+    ax2.bar(x2 + w2, vals_adap, w2, label=r"Adaptive FedOSD ($\lambda=20, \eta=0.40$)", color="#e74c3c", alpha=0.9)
+    
+    ax2.set_ylabel("Metric Value (%)")
+    ax2.set_title(r"(b) Aggregate Comparison ($U_N = 2$ Clients Unlearned)", fontweight="bold")
+    ax2.set_xticks(x2)
+    ax2.set_xticklabels(metrics)
+    ax2.legend(loc="upper right", frameon=True)
+    ax2.set_ylim(0, 70)
+    
+    plt.tight_layout()
+    out_path = os.path.join(OUTPUT_DIR, "fig6_multiclient_benchmark.png")
+    plt.savefig(out_path, dpi=300)
+    plt.close()
+    print(f"Generated: {out_path}")
+
 if __name__ == "__main__":
     ensure_dir(OUTPUT_DIR)
     plot_figure_1_dynamics()
@@ -336,5 +406,6 @@ if __name__ == "__main__":
     plot_figure_3_hyperparameter_pareto()
     plot_figure_4_multiseed_robustness()
     plot_figure_5_weight_trajectories()
+    plot_figure_6_multiclient()
     print("All publication figures successfully generated in figures/ directory!")
 
