@@ -379,9 +379,13 @@ class FedOSD(fp.UnlearnAlgorithm):
             else:
                 d = gu
 
-            # Shadow diagnostics
+            # Apply step_scale before logging and updating
+            if self.step_scale != 1.0:
+                d = self.step_scale * d
+
+            # Shadow diagnostics (logs the exact descent vector applied to the model)
             d_used_norm = float(torch.norm(d).item())
-            capped_flag = bool(d_used_norm < d_raw_norm - 1e-12)
+            capped_flag = bool(d_used_norm < (d_raw_norm * self.step_scale) - 1e-12)
             current_disp = float(torch.norm(self.module.span_model_params_to_vec() - self.init_model_params).item())
             cos_client = ((A_hat @ d) / (torch.norm(d) + 1e-12)).cpu().numpy().tolist()
             conf_client = torch.clamp(-(A_hat @ gu) / (gu_norm + 1e-12), min=0.0).cpu().numpy().tolist()
@@ -404,9 +408,6 @@ class FedOSD(fp.UnlearnAlgorithm):
                 'w': [float(w_i) for w_i in w_vec.cpu().numpy()],
                 'lam_eff': lam_eff_list
             })
-
-            if self.step_scale != 1.0:
-                d = self.step_scale * d
 
             if self.test_conflicts:
                 self.stat_update_conflict(d, gr_locals)

@@ -1,384 +1,293 @@
-# Adaptive FedOSD: Federated Unlearning with Client-Adaptive Conflict Mitigation
+# One-Sided Unscaled FedOSD: Federated Unlearning with Non-Harm Constraints and Norm Bounding
 
-Implementation and empirical evaluation of **Adaptive FedOSD**, extending the AAAI-25 paper:
+Implementation and empirical evaluation of **One-Sided Unscaled FedOSD (cap 1.0)**, extending the federated unlearning framework of:
 > **Pan Z, Wang Z, Li C, et al.** *Federated unlearning with gradient descent and conflict mitigation.* Proceedings of the AAAI Conference on Artificial Intelligence (AAAI-25), 39(19): 19804-19812.
 
 ---
 
 ## 1. Overview & Motivation
 
-### Background: Standard FedOSD
-Original FedOSD unlearns a target client's data by taking the unlearning gradient $g_u$ and projecting it onto the orthogonal complement (null space) of the retained clients' gradient subspace:
+### Background: Standard Hard FedOSD
+Standard FedOSD unlearns target client(s) by taking the aggregated unlearning pseudo-gradient $g_u$ and projecting it onto the orthogonal complement of the retained clients' gradient subspace:
 
 $$\min_d \|d - g_u\|^2 \quad \text{subject to} \quad g_i^T d = 0 \quad \forall i \in \mathcal{C}_{\text{retained}}$$
 
-This is solved in closed-form via a pseudoinverse projection:
-$$d = g_u - A^T (A A^T)^{-1} A g_u$$
+This is solved in closed form via pseudoinverse projection ($\lambda = \infty$):
+$$d_{\text{hard}} = g_u - A^T (A A^T)^{-1} A g_u$$
 
-### The Limitation
-In federated learning with non-IID data distributions, retained clients are **heterogeneously affected** by unlearning:
-- Retained clients sharing classes or features with the unlearned client suffer significant accuracy degradation.
-- Retained clients with distinct data distributions remain largely untouched.
-- Standard FedOSD treats all retained clients identically with rigid, uniform hard orthogonality ($g_i^T d = 0$). This restricts the descent vector without prioritizing the clients that are actually vulnerable to unlearning collateral damage.
+### Structural Trade-offs in Non-IID Unlearning
+In non-IID federated learning, unlearning affects retained clients heterogeneously:
+1. **Class-Overlap Vulnerability**: When a retained client shares classes with the unlearned client, unlearning gradient directions conflict directly with that client's local objectives.
+2. **Over-Constrained Orthogonality**: Standard Hard FedOSD forces $g_i^T d = 0$ symmetrically for all retained clients. This prohibits harmful descent directions ($g_i^T d < 0$), but also strictly forbids *helpful* descent directions ($g_i^T d > 0$) that would otherwise improve retained client performance.
+3. **Gradient Rescaling vs. Pure Projection**: In the legacy implementation, unconstrained descent directions were subjected to norm rescaling: $d = \frac{d}{\|d_{\text{raw}}\|} \cdot \|g_u\|$, artificially dilating descent steps up to the unlearned client's local gradient norm $\|g_u\|$ (at Round 1, $\|g_u\| \approx 27.84$ vs $\|d_{\text{raw}}\| \approx 20.81$, an artificial $+33.8\%$ step enlargement). Legacy Hard FedOSD was similarly rescaled to $\|g_u\|$. This aggressive dilation causes excessive parameter displacement and collateral utility degradation on retained clients.
 
-### The Adaptive FedOSD Solution
-**Adaptive FedOSD** introduces a **client-weighted soft constraint** with dynamic deficit-driven adaptation:
-$$\min_d \|d - g_u\|^2 + \lambda \sum_{i \in \mathcal{C}_{\text{retained}}} w_i \left(\frac{g_i^T d}{\|g_i\|}\right)^2$$
+### Proposed Solution: One-Sided, Unscaled Projection (cap 1.0)
+To achieve the benefit of one-sided non-harm constraints ($\hat{g}_i^T d \ge 0$) without artificial $\|g_u\|$ rescaling or excessive displacement, **One-Sided Unscaled FedOSD (cap 1.0)** solves the one-sided projection via dual Non-Negative Least Squares (NNLS) and caps the update vector norm at $\|d_{\text{hard}}\|$:
 
-Where:
-- $\lambda > 0$ controls the global stiffness of the conflict mitigation constraint.
-- $w_i > 0$ dynamically modulates per-client protection based on performance deficits.
-- Normalized gradient directions $\hat{g}_i = g_i / \|g_i\|$ ensure scale invariance across neural network architectures.
+$$d = \begin{cases} d_{\text{raw}} & \text{if } \|d_{\text{raw}}\| \le \text{cap} \cdot \|d_{\text{hard}}\| \\ \text{cap} \cdot \frac{\|d_{\text{hard}}\|}{\|d_{\text{raw}}\|} d_{\text{raw}} & \text{otherwise} \end{cases}$$
+
+The frozen primary configuration sets $\text{cap} = 1.0$ with uniform weighting ($\eta = 0$).
 
 ---
 
-## 2. Mathematical Formulation
+## 2. Mathematical Formulations
 
-### Scale-Invariant Closed-Form Solve via Woodbury Identity
-Let $\hat{A} \in \mathbb{R}^{n \times p}$ denote the matrix whose rows are the unit-normalized retained client gradients $\hat{g}_i = g_i / \|g_i\|$. The optimization objective is:
+### 2.1 Symmetric Closed-Form Projection (Hard Baseline, $\lambda = \infty$)
+Let $\hat{A} \in \mathbb{R}^{n \times p}$ denote the matrix whose rows are unit-normalized retained client gradients $\hat{g}_i = g_i / \|g_i\|$. The closed-form orthogonal projection is:
 
-$$\min_d \|d - g_u\|^2 + \lambda d^T \hat{A}^T W \hat{A} d$$
+$$d_{\text{hard}} = g_u - \hat{A}^T (\hat{A} \hat{A}^T)^{-1} \hat{A} g_u$$
 
-Setting the gradient with respect to $d$ to zero yields:
-$$(I_p + \lambda \hat{A}^T W \hat{A}) d = g_u \implies d = (I_p + \lambda \hat{A}^T W \hat{A})^{-1} g_u$$
+### 2.2 One-Sided Non-Harm Projection (Dual NNLS Solve)
+Since parameter updates follow $w^{(t+1)} = w^{(t)} - \eta_{\text{lr}} d$, the first-order change in client $i$'s loss is $\Delta \mathcal{L}_i \approx -\eta_{\text{lr}} (g_i^T d)$. Therefore, a retained client is not harmed whenever $\hat{g}_i^T d \ge 0$.
 
-Applying the **Woodbury Matrix Identity** transforms the solve from the parameter space $p$ (millions of dimensions) down to the small client subspace $n \times n$:
+The one-sided projection formulation is:
 
-$$d = g_u - \hat{A}^T \left(\frac{W^{-1}}{\lambda} + \hat{A} \hat{A}^T\right)^{-1} \hat{A} g_u$$
+$$\min_d \frac{1}{2}\|d - g_u\|^2 + \frac{1}{2} \sum_{i \in \mathcal{C}_{\text{retained}}} \lambda_i \max(0, -\hat{g}_i^T d)^2$$
 
-#### Asymptotic Properties:
-1. **$\lambda \to \infty$ (Hard Orthogonality Recovery)**:
-   $$\lim_{\lambda \to \infty} d = g_u - \hat{A}^T (\hat{A} \hat{A}^T)^{-1} \hat{A} g_u \equiv g_u - A^T (A A^T)^{-1} A g_u$$
-   *Matches standard FedOSD's hard projection.*
-2. **$\lambda \to 0$ (Unconstrained Unlearning)**:
-   $$\lim_{\lambda \to 0} d = g_u$$
-3. **Scale Invariance**: Because $\text{diag}(\hat{A}\hat{A}^T) = [1, 1, \dots, 1]$, the regularization term $\frac{1}{\lambda w_i}$ operates directly against unit variance, preventing gradient norms from drowning out the soft constraint.
+Introducing slack variables $s \ge 0$ with $-\hat{A} d \le s$, the Lagrange dual problem reduces to:
 
----
+$$\min_{\nu \ge 0} \nu^T (G + D) \nu + 2 \nu^T b \quad \text{where} \quad G = \hat{A} \hat{A}^T, \quad b = \hat{A} g_u, \quad D = \text{diag}\left(\frac{1}{\lambda_i}\right)$$
 
-### Dynamic Deficit-Driven Weight Updates ($w_i$)
-To defend vulnerable clients without over-constraining the model, protection weights $w_i$ adapt each round:
+With $\lambda = 10^5$, Cholesky factorization $M = G + D + 10^{-10} I = L L^T$ and $y = -L^{-1} b$ enables solution via Non-Negative Least Squares (NNLS):
 
-1. **Exponential Moving Average (EMA)**:
-   Smooths single-round evaluation noise ($\beta = 0.8$):
-   $$\bar{a}_i^{(t)} = \beta \, \bar{a}_i^{(t-1)} + (1 - \beta) \, a_i^{(t)}$$
-2. **Cohort Deficit Identification**:
-   Measures each client's performance gap below the retained cohort mean $\mu^{(t)} = \frac{1}{n} \sum_j \bar{a}_j^{(t)}$:
-   $$\text{deficit}_i = \max(\mu^{(t)} - \bar{a}_i^{(t)}, 0)$$
-3. **Target Weight Scaling & Momentum Decay**:
-   $$w_i^{\text{target}} = 1.0 + \eta \cdot \left(\frac{\text{deficit}_i}{10}\right)$$
-   $$w_i^{(t)} = 1.0 + \left(w_i^{(t-1)} - 1.0\right) \times 0.95 + \left(w_i^{\text{target}} - 1.0\right) \times 0.05$$
-   Clamped to $[0.2, 5.0]$.
-4. **Subspace Normalization**:
-   Before solving, weights are normalized across active clients: $\sum_i w_i = n$.
+$$\min_{\nu \ge 0} \|L^T \nu - y\|^2 \implies d_{\text{raw}} = g_u + \hat{A}^T \nu$$
 
-Struggling clients receive **$\sim 2.3\times$ higher protection weight** ($w_i \approx 1.6 - 2.3$ vs $0.7$ for healthy clients), forcing the unlearning descent vector $d$ to strictly avoid interfering with their features.
+### 2.3 Step-Norm Bounding
+When $\|d_{\text{raw}}\| > \|d_{\text{hard}}\|$, the update is scaled back to match $\|d_{\text{hard}}\|$ exactly ($\text{cap} = 1.0$), ensuring the parameter displacement does not exceed the conservative hard boundary.
 
 ---
 
-## 3. Empirical Results & Benchmarks
+## 3. Training Regimes & Decision Gates
 
-All experiments were conducted on the benchmark CIFAR-10 non-IID setup (10 clients, 2 classes per client, pathological non-IID split, backdoor trigger injected). Evaluated on NVIDIA RTX GPU with CUDA 12.4.
+### 3.1 Training Regimes & Gate A Decision (Tuning Seeds 101–103)
+To eliminate confounds from inconsistent learning rates and under-trained pretraining models, regimes were audited across tuning seeds 101–103 ($n=3$):
 
-### 3.1 Comprehensive Hyperparameter Benchmark Table (Seed 1)
+| Regime | Pretrain lr | Retrain lr | Recovery $r_{\text{lr}}$ | Purpose & Characteristics | Retrain Mean (Seeds 101–103) |
+| :--- | :---: | :---: | :---: | :--- | :---: |
+| **R1 (Historical / Exploratory)** | 0.01 | 0.05 | $10^{-6}$ | Historical setting (Seeds 11–20); under-trained pretrain | ~59.4% (R=200) |
+| **R1b (Control)** | 0.01 | 0.01 | $10^{-6}$ | Controls for lr disparity at pretrain lr | 44.69% $\pm$ 2.45% |
+| **R2 (Primary Matched)** | 0.05 | 0.05 | $10^{-4}$ | Matched lr across pipeline; converged pretrain | **58.10% $\pm$ 2.25%** |
 
-| Algorithm / Configuration | $\lambda$ | $\eta$ | Unlearn ASR $\downarrow$ | Retained Acc (Mean $\pm$ Std) | Min Client Acc $\uparrow$ | Max Client Acc |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Original FedOSD (Hard)** | $\infty$ | $0.0$ | **0.08%** | 53.70% $\pm$ 19.49% | 26.5% | 74.2% |
-| **Soft Uniform Baseline** | $100.0$ | $0.0$ | **0.08%** | 53.67% $\pm$ 19.51% | 26.5% | 74.2% |
-| **Adaptive FedOSD** | $100.0$ | $0.05$ | **0.08%** | 53.69% $\pm$ 19.48% | 26.5% | 74.2% |
-| **Adaptive FedOSD** | $100.0$ | $0.15$ | **0.08%** | 53.66% $\pm$ 19.53% | 26.4% | 74.2% |
-| **Adaptive FedOSD** | $50.0$ | $0.05$ | **0.08%** | 53.68% $\pm$ 19.50% | 26.5% | 74.2% |
-| **Adaptive FedOSD** | $50.0$ | $0.50$ | **0.08%** | 53.67% $\pm$ 19.54% | 26.4% | 74.2% |
-| **Soft Uniform Baseline** | $20.0$ | $0.0$ | **0.02%** | 47.70% $\pm$ 30.16% | 6.2% | 80.1% |
-| **Adaptive FedOSD** | $20.0$ | $0.20$ | **0.02%** | 47.76% $\pm$ 29.80% | 6.9% | 80.0% |
-| **Adaptive FedOSD (Optimal)**| **20.0** | **0.40** | **0.02%** | **47.82% $\pm$ 29.45%** | **7.1%** | **79.9%** |
-| **Over-Loose Soft** | $1.0$ | $0.50$ | **0.00%** | 38.38% $\pm$ 40.02% | 0.0% | 88.8% |
+* **Gate A Resolution**: Primary regime is **R2**. The R1b control demonstrates that the learning rate disparity ($0.01$ vs $0.05$) alone accounts for **$13.41$ percentage points** (44.7%) of the historical 30-point Retrain gap in R1. Under primary regime R2, the true gap between Hard FedOSD ($52.36\%$) and Retrain ($58.10\%$) is only **$5.74$ percentage points** on tuning seeds.
+* **Recovery Rate Freeze**: A systematic sweep of $r_{\text{lr}} \in \{10^{-6}, 10^{-4}, 10^{-3}, 10^{-2}\}$ established that $r_{\text{lr}} = 10^{-4}$ maximizes baseline Hard recovered mean ($52.36\% \pm 2.43\%$ vs $44.93\%$ at $10^{-6}$) while keeping backdoor ASR under $4.3\%$. It is frozen in [`FROZEN_CONFIGS.md`](FROZEN_CONFIGS.md).
 
----
+### 3.2 Gradient Rescaling Finding & Cap Sweep (Regime R2, Tuning Seeds 101–103)
+Auditing projection mechanics in `tfedplat/algorithm/unlearning/FedOSD.py` (lines 371–380) revealed the operational difference between unscaled projection and legacy unconstrained descent:
+- **One-Sided, Unscaled (cap 1.0)**: Traverses the `cap_hard_ratio > 0` code branch. When $\|d_{\text{raw}}\| > \|d_{\text{hard}}\|$, it clamps the norm to $\|d_{\text{hard}}\|$; for cap $\ge 2.0$ (or $10^9$), it outputs the pure unconstrained NNLS projection $d_{\text{raw}}$ without any dilation (displacement $= 0.2737$ on Seed 101).
+- **One-Sided Rescaled to $\|g_u\|$**: Traverses the legacy `elif d_raw_norm > 1e-8` branch ($d = \frac{d}{\|d_{\text{raw}}\|} \cdot \|g_u\|$), inflating the vector norm up to $\|g_u\|$ (displacement $= 0.3791$ on Seed 101).
+- **Hard FedOSD Rescaled to $\|g_u\|$**: Similarly hits the legacy branch, rescaling $d_{\text{hard}}$ to $\|g_u\|$ (displacement $= 0.3648$ on Seed 101).
 
-### 3.2 Multi-Seed Statistical Verification
+Empirical audit of the raw NNLS ratio $\|d_{\text{raw}}\| / \|d_{\text{hard}}\|$ before capping on tuning seeds 104–105 shows that $d_{\text{raw}}$ exceeds $d_{\text{hard}}$ by up to $+33.4\%$ in early rounds before stabilizing near $1.00$.
 
-To verify that the empirical benefits of Adaptive FedOSD are statistically reproducible and robust to different data distributions and unlearned client assignments, we evaluated multiple seeds with independent unlearned client partitions:
-- **Seed 1**: Client 2 unlearned (classes [2, 3]).
-- **Seed 2**: Client 5 unlearned (classes [4, 5]). Pre-trained from scratch for 2,000 rounds of `FedAvg` to produce `seed2_unlearn_task_pretrained_model.pth`.
+#### Cap Ratio Sweep Matrix (Tuning Seeds 101–103, Mean Across Seeds)
+| Cap Ratio | Retained Mean | Worst-Off Floor | Max Collateral Drop | Forget-Set Clean | Backdoor ASR | Displacement $\|w_{\text{final}} - w_{\text{pre}}\|$ |
+| :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **0.50** | 52.05% | 23.83% | 5.94% | 26.61% | 8.05% | 0.1697 |
+| **0.75** | 52.35% | 24.33% | 5.61% | 26.83% | 6.69% | 0.2098 |
+| **1.00** | **52.48%** | **24.83%** | **5.44%** | 27.00% | 5.98% | 0.2395 |
+| **1.25** | 52.47% | 24.83% | 5.44% | 27.06% | 5.96% | 0.2421 |
+| **1.50** | 52.47% | 24.83% | 5.44% | 27.06% | 5.95% | 0.2422 |
 
-The cross-seed results aggregated across all seeds using [`evaluate_multiseed.py`](evaluate_multiseed.py) with Standard Error ($\text{SE}$):
+#### Matched-Strength Control (At Matched Parameter Displacement)
+To verify that gains are not merely due to taking smaller steps, One-sided, unscaled (cap 1.0) was compared against a Hard-scaled control sweep (step scale $\in \{0.25, 0.5, 0.75, 1.0\}$) at matched parameter displacement $\|w_{\text{final}} - w_{\text{pre}}\|$:
 
-| Algorithm / Configuration | Tested Seeds | Mean Unlearn ASR $\downarrow$ | Retained Client Accuracy (Mean $\pm$ Std) | Worst-Off Client Accuracy (Min) $\uparrow$ |
-| :--- | :---: | :---: | :---: | :---: |
-| **Original FedOSD (Hard)** | 1, 2 | **0.06%** | 55.87% $\pm$ 19.68% (SE $\pm$ 2.17%) | 17.50% (SE $\pm$ 9.00%) |
-| **Soft Uniform Baseline ($\lambda=20, \eta=0.0$)** | 1, 2 | **0.02%** | 49.54% $\pm$ 28.75% (SE $\pm$ 1.84%) | 3.65% (SE $\pm$ 2.55%) |
-| **Adaptive FedOSD ($\lambda=20, \eta=0.40$)** | 1, 2 | **0.02%** | **49.63% $\pm$ 28.26%** (SE $\pm$ 1.81%) | **4.80%** (SE $\pm$ 2.30%) |
+| Metric at Matched Displacement | Paired Difference (Capped vs Hard-Scaled) | 95% Bootstrap CI | Sign Agreement |
+| :--- | :---: | :---: | :---: |
+| **Retained Client Mean Utility** | **+0.24%** | [+0.17%, +0.32%] | 3/3 positive |
+| **Worst-Off Client Floor** | **+0.38%** | [+0.06%, +0.62%] | 3/3 positive |
+| **Max Collateral Drop** | **-0.21%** | [-0.63%, +0.17%] | 2/3 negative |
 
-#### Seed-by-Seed Comparative Breakdown:
-
-* **Seed 1 (Unlearned Client 2)**:
-  - **Soft Uniform ($\eta=0.0$)**: Retained Mean $47.70\% \pm 30.16\%$, Min $6.20\%$, ASR $0.02\%$
-  - **Adaptive FedOSD ($\eta=0.40$)**: Retained Mean **$47.82\% \pm 29.45\%$**, Min **$7.10\%$** ($+14.5\%$ lift on worst-off), ASR $0.02\%$
-* **Seed 2 (Unlearned Client 5)**:
-  - **Soft Uniform ($\eta=0.0$)**: Retained Mean $51.39\% \pm 27.35\%$, Min $1.10\%$, ASR $0.02\%$
-  - **Adaptive FedOSD ($\eta=0.40$)**: Retained Mean **$51.43\% \pm 27.07\%$**, Min **$2.50\%$** ($+127\%$ lift on worst-off), ASR $0.02\%$
-
-### 3.3 Publication-Grade Empirical Figures
-
-The automated script [`plot_results.py`](plot_results.py) compiles the JSON experiment histories into 300-DPI publication-ready visual artifacts stored in [`figures/`](figures/):
-
-#### Figure 1: Unlearning Dynamics & Worst-Off Floor Protection
-![Unlearning Dynamics](figures/fig1_unlearning_dynamics.png)
-* **Panel (a)**: Traces the descent trajectory of the backdoor Attack Success Rate (ASR) over 100 rounds. Hard FedOSD, Soft Uniform, and Adaptive FedOSD all swiftly drop beneath the $<1\%$ unlearning threshold within 25 rounds.
-* **Panel (b)**: Tracks the worst-off retained client accuracy over rounds. Adaptive FedOSD actively buffers struggling clients against catastrophic collapse, maintaining a higher floor throughout the unlearning trajectory.
+* **Gate B Working Hypothesis**: Candidate headline: *"A better trade-off at equal unlearning strength: the step-norm cap is a useful constraint, not only a smaller step."* This remains a hypothesis on tuning seeds ($n=3$) pending formal confirmation on fresh seeds 21–30.
 
 ---
 
-#### Figure 2: Per-Client Accuracy Distribution & Fairness Lift
-![Per-Client Accuracy](figures/fig2_per_client_distribution.png)
-* Side-by-side comparison of individual client accuracies across the retained cohort.
-* The dynamically adapted weight $w_i(t)$ prioritizes the most vulnerable clients (lifting Client 0 from $6.2\% \to 7.1\%$ on Seed 1, and from $1.1\% \to 2.5\%$ on Seed 2), without causing collateral damage to high-performing clients.
+## 4. Empirical Evaluation Protocol & Benchmarks (Historical Regime R1, Exploratory Seeds 11–20)
+
+### Experimental Timeline & Stage Matching
+| Stage | Communication Rounds | Description | Matched Retrain Reference |
+| :--- | :---: | :--- | :--- |
+| **Pretrain** | Rounds 1 to 100 | Initial federated pretraining on full cohort | — |
+| **Unlearning** | Rounds 1 to 100 | Unlearning updates ($UR=100$) | Retrain from scratch at $R=200$ |
+| **Recovery** | Rounds 101 to 200 | Post-unlearning federated recovery training | Retrain from scratch at $R=300$ (matched total post-init budget) |
+
+* **Stage Matching Note**: In Table 4.1 (unlearning stage, 100 unlearning rounds), the matched reference is Retrain from scratch at $R=200$. In Table 4.2 (post-recovery stage, 100 unlearning + 100 recovery rounds), the reference is Retrain at $R=300$ to match the total post-initialization budget of 200 rounds.
+* **CLI Flag Meaning (`--R 200`)**: In `run_UnlearningTask.py`, passing `--R 200 --UR 100` directs the framework to run 100 unlearning rounds followed by 100 post-unlearning federated recovery rounds (total 200 rounds). In historical R1 scripts, passing `--R 100 --UR 100` stopped after 1 recovery round.
+* **Historical Regime R1 CLI Execution Commands**:
+  - Pretrain: `python run_UnlearningTask.py --seed <s> --lr 0.01 --R 100 --UR 100 --unlearn_pretrain True ...`
+  - Retrain: `python run_UnlearningTask.py --seed <s> --lr 0.05 --R 200 (or 300) --UR 0 --retrain True ...`
+  - Hard: `python run_UnlearningTask.py --seed <s> --lr 0.0004 --r_lr 1e-6 --proj_mode hard ...`
+  - Capped: `python run_UnlearningTask.py --seed <s> --lr 0.0004 --r_lr 1e-6 --proj_mode one_sided --cap_hard_ratio 1.0 ...`
+
+Evaluation metrics below reflect exploratory reporting seeds 11–20 ($N=10$, regime R1). Bolding indicates the closest distance to the matched Retrain reference.
 
 ---
 
-#### Figure 3: Hyperparameter Pareto Frontier & Regularization Regimes
-![Pareto Frontier](figures/fig3_hyperparameter_pareto.png)
-* **Panel (a)**: Demonstrates the effect of increasing the adaptation strength $\eta \in [0.0, 0.40]$ at $\lambda = 20.0$. Higher $\eta$ monotonically increases minimum client accuracy (green) while simultaneously compressing inequality/variance across the cohort (red).
-* **Panel (b)**: Illustrates the three stiffness regimes: under-constrained collapse at $\lambda \le 1.0$, optimal Pareto balance at $\lambda \approx 20.0$, and plateau convergence to hard orthogonality at $\lambda \ge 50.0$.
+### 4.1 End of Unlearning Stage (Historical Regime R1, Exploratory Seeds 11–20)
+| Method / Configuration | Proj. Mode | Seeds | Backdoor ASR (Target: 3.03%) | Retained Mean $\pm$ Std Dev | Worst-Off Floor (Min) $\uparrow$ | Max Collateral Drop $\downarrow$ | Forget Clean Utility $\uparrow$ | MIA ROC-AUC (Target: 0.5055) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Retrain Baseline ($R=200$)** | Scratch | 11–20 | 3.03% | **59.42% $\pm$ 14.72%** | **28.62%** | **-8.38%** | **29.18%** | 0.5055 |
+| **Hard FedOSD ($\lambda=\infty$)** | Closed Hard | 11–20 | 0.02% | 29.09% $\pm$ 14.90% | 2.10% | 18.32% | 1.42% | 0.5143 |
+| **Soft Uniform ($\lambda=20, \eta=0$)** | Two-Sided | 11–20 | 0.00% | 29.08% $\pm$ 17.62% | 1.43% | 21.54% | 1.08% | **0.5064** |
+| **One-sided rescaled to ||g_u||** | One-Sided | 11–20 | 0.03% | 30.67% $\pm$ 17.19% | 0.82% | 22.80% | 0.42% | 0.5067 |
+| **Step-Norm Capped ($\text{cap}=1.0$)** | One-Sided | 11–20 | **0.37%** | **32.51% $\pm$ 14.64%** | **2.42%** | **14.68%** | **1.82%** | 0.5105 |
 
 ---
 
-#### Figure 4: Multi-Seed Statistical Robustness Across Independent Splits
-![Multi-Seed Robustness](figures/fig4_multiseed_robustness.png)
-* Cross-seed validation across Seeds 1 and 2 with Standard Error ($\text{SE}$) error bars. Confirms that Adaptive FedOSD achieves a statistically consistent $+31.5\%$ relative performance boost for the worst-off client while completely eliminating the unlearned backdoor.
+### 4.2 Post-Recovery Stage (Historical Regime R1, Exploratory Seeds 11–20)
+| Method / Configuration | Proj. Mode | Seeds | Backdoor ASR (Target: 3.03%) | Retained Mean $\pm$ Std Dev | Worst-Off Floor (Min) $\uparrow$ | Max Collateral Drop $\downarrow$ | Forget Clean Utility $\uparrow$ | MIA ROC-AUC (Target: 0.5055) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Retrain Baseline ($R=300$)** | Scratch | 11–20 | 3.03% | **61.85% $\pm$ 13.90%** | **33.10%** | **-9.15%** | **31.40%** | 0.5055 |
+| **Hard FedOSD ($\lambda=\infty$)** | Closed Hard | 11–20 | 0.13% | 31.85% $\pm$ 14.85% | 3.83% | 14.76% | 3.35% | 0.5143 |
+| **Soft Uniform ($\lambda=20, \eta=0$)** | Two-Sided | 11–20 | 0.05% | 31.44% $\pm$ 17.40% | 3.85% | 15.49% | 3.37% | **0.5064** |
+| **One-sided rescaled to ||g_u||** | One-Sided | 11–20 | 0.17% | 33.07% $\pm$ 17.02% | 2.72% | 14.72% | 2.20% | 0.5067 |
+| **Step-Norm Capped ($\text{cap}=1.0$)** | One-Sided | 11–20 | **0.94%** | **33.88% $\pm$ 14.50%** | **4.23%** | **11.21%** | **3.87%** | 0.5105 |
 
 ---
 
-#### Figure 5: Dynamic Client Protection Weight Trajectories $w_i(t)$ Over Time
-![Dynamic Weight Trajectories](figures/fig5_weight_trajectories.png)
-* Visual proof of the adaptive deficit mechanism in action:
-  - **Client 7** (worst-off, accuracy $7.1\%$) and **Client 0** (accuracy $14.4\%$) suffer significant performance deficits from unlearning collateral damage.
-  - The adaptive weighting dynamically elevates their protection coefficients to **$w_7 \approx 2.62$** and **$w_0 \approx 2.31$** ($>2.6\times$ higher conflict penalty), forcing the unlearning vector $d$ into near-zero interference with their gradient directions.
-  - Meanwhile, thriving clients (Clients 1, 3, 8, 9 with accuracy $>76\%$) remain at baseline $w_i = 1.0$, preventing over-regularization.
+### 4.3 Paired Statistical Comparisons with Explicit Holm Families (Historical Regime R1, Exploratory Seeds 11–20)
+All p-values corrected within predefined family scopes:
 
----
-
-### 3.4 Multi-Client Federated Unlearning ($U_N = 2$)
-
-In real-world enterprise and healthcare federated networks, multiple clients frequently exercise their "right to be forgotten" in batches:
-- **The Challenge**: Standard FedOSD enforces hard orthogonality against the retained gradient subspace:
-  $$g_i^T d = 0 \quad \forall i \in \mathcal{C}_{\text{retained}}$$
-  When unlearning $K \ge 2$ clients simultaneously, the aggregated unlearning gradient $g_u = \frac{1}{K} \sum_{k=1}^K g_{u_k}$ must simultaneously navigate non-conflicting descent with multiple differing local distributions. Hard orthogonality severely shrinks the admissible parameter subspace, leading to sharp accuracy drops on overlapping retained clients and incomplete unlearning.
-- **The Adaptive Soft Advantage**: By allowing controlled soft relaxation ($\lambda \approx 20.0$), Adaptive FedOSD permits harmless tangential updates along non-vulnerable client dimensions while focusing strong protection ($w_i > 2.0$) exclusively on retained clients that share overlapping classes with the unlearned clients.
-
-#### Multi-Client Empirical Benchmark ($U_N = 2$, Clients 2 & 4 Unlearned)
-
-Evaluated via [`evaluate_multiclient.py`](evaluate_multiclient.py):
-
-| Algorithm / Configuration | $U_N$ | Mean Unlearn ASR $\downarrow$ | Retained Client Accuracy (Mean $\pm$ Std) | Worst-Off Client (Min) $\uparrow$ | Best-Off Client (Max) |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Original FedOSD (Hard Orthogonality)** | 2 | **0.77%** | 51.65% $\pm$ 16.77% | 29.70% | 76.80% |
-| **Soft Uniform Baseline ($\lambda=20, \eta=0.0$)** | 2 | **0.51%** | 48.46% $\pm$ 25.08% | 13.70% | 82.80% |
-| **Adaptive FedOSD ($\lambda=20, \eta=0.40$)** | 2 | **0.50%** | **48.89% $\pm$ 24.03%** | **16.00%** | **83.20%** |
-
-#### Per-Client Performance Lift Under Batch Unlearning:
-Under batch unlearning of Clients 2 and 4, Adaptive FedOSD actively lifted every single vulnerable client across the cohort compared to the uniform soft baseline:
-* **Client 7 (Worst-Off)**: Lifted from **$13.70\% \to 16.00\%$** ($+16.8\%$ relative gain).
-* **Client 0**: Lifted from **$33.90\% \to 36.50\%$** ($+2.60\%$ absolute gain).
-* **Client 6**: Lifted from **$19.50\% \to 21.20\%$** ($+1.70\%$ absolute gain).
-* **Client 5**: Lifted from **$35.10\% \to 36.10\%$** ($+1.00\%$ absolute gain).
-* **Unlearning Completeness**: Target backdoor Attack Success Rate (ASR) suppressed to **$0.50\%$** (superior to Hard FedOSD's $0.77\%$, where Client 2 retained $1.04\%$ backdoor residue).
-
----
-
-#### Figure 6: Multi-Client Batch Unlearning Benchmark ($U_N = 2$)
-![Multi-Client Benchmark](figures/fig6_multiclient_benchmark.png)
-* **Panel (a)**: Per-client retained accuracy comparing Soft Uniform vs. Adaptive FedOSD, showing systematic elevation of all vulnerable client floors.
-* **Panel (b)**: Summary comparison demonstrating reduced backdoor ASR ($0.50\%$), higher worst-off client floor ($16.0\%$), and higher retained cohort accuracy ($48.89\%$).
-
----
-
-### 3.5 Complex Dataset Generalization: CIFAR-100 Benchmark
-
-To verify that Adaptive FedOSD is dataset- and architecture-agnostic, we evaluate federated unlearning on **CIFAR-100** (`DataLoader_cifar100_pat`):
-- **Scale & Dimensionality**: 100 fine-grained visual categories (a $10\times$ increase over CIFAR-10).
-- **Partition**: 10 clients, each assigned 10 distinct classes in a pathological non-IID partition ($N=10, NC=10$, balanced $B=100$).
-- **Pre-training**: 500 communication rounds of FedAvg embedding a targeted backdoor in Client 2 ($\text{ASR} = 55.94\%$, Retained Accuracy $= 28.27\% \pm 3.3\%$). Checkpoint saved to `seed1_unlearn_task_pretrained_model.pth`.
-- **Challenge**: The 100-class representation space creates severe gradient collisions during unlearning. Under hard orthogonality, the rigid subspace restriction risks collateral damage or incomplete unlearning, while uniform soft relaxation causes uneven performance degradation across clients.
-
-#### CIFAR-100 Empirical Benchmark (Evaluated via [`evaluate_cifar100.py`](evaluate_cifar100.py))
-
-##### A. Unlearning Stage (Round 100):
-| Algorithm / Configuration | $\lambda$ | $\eta$ | Unlearn ASR $\downarrow$ | Retained Client Accuracy (Mean $\pm$ Std) | Worst-Off Client (Min) $\uparrow$ | Best-Off Client (Max) |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Original FedOSD (Hard)** | $100000.0$ | $0.0$ | 0.56% | 28.07% $\pm$ 3.52% | 21.60% | 32.40% |
-| **Soft Uniform Baseline** | $20.0$ | $0.0$ | 0.34% | 27.64% $\pm$ 4.76% | 17.10% | 33.60% |
-| **Adaptive FedOSD** | $20.0$ | $0.40$ | **0.36%** | **27.69% $\pm$ 4.59%** | **17.70%** *(+0.60% lift)* | 33.40% |
-
-##### B. Full Recovery Stage (Round 200, Post-Training):
-| Algorithm / Configuration | $\lambda$ | $\eta$ | Final ASR $\downarrow$ | Retained Client Accuracy (Mean $\pm$ Std) | Worst-Off Client (Min) $\uparrow$ | Best-Off Client (Max) |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Original FedOSD (Hard)** | $100000.0$ | $0.0$ | 1.02% *(leakage)* | 28.96% $\pm$ 4.00% | 20.60% (Client 5) | 33.90% |
-| **Soft Uniform Baseline** | $20.0$ | $0.0$ | 0.96% | 28.79% $\pm$ 4.03% | 21.60% | 34.10% |
-| **Adaptive FedOSD** | $20.0$ | $0.40$ | **0.96%** | **28.82% $\pm$ 3.99%** | **21.60%** *(+1.00% over Hard)* | 34.00% |
-
-#### Per-Client Accuracy Breakdown on CIFAR-100 (Round 200):
-| Client ID | Hard FedOSD | Soft Uniform | Adaptive FedOSD | Adaptive Delta vs. Soft Uniform |
-| :---: | :---: | :---: | :---: | :---: |
-| **C0** | 32.50% | 32.30% | 32.40% | **+0.10%** |
-| **C1** | 29.50% | 29.10% | 29.10% | 0.00% |
-| **C2 (Unlearned)** | *1.02% (ASR)* | *0.96% (ASR)* | *0.96% (ASR)* | *Eradicated* |
-| **C3** | 29.20% | 28.90% | 29.00% | **+0.10%** |
-| **C4** | 27.90% | 28.10% | 28.10% | 0.00% |
-| **C5 (Worst-Off in Hard)** | 20.60% | 21.60% | 21.60% | **+1.00% vs Hard** |
-| **C6** | 24.20% | 22.40% | 22.60% | **+0.20%** |
-| **C7** | 33.90% | 34.10% | 34.00% | -0.10% |
-| **C8** | 30.60% | 31.20% | 31.10% | -0.10% |
-| **C9** | 32.20% | 31.40% | 31.50% | **+0.10%** |
-
-#### Key Insights from CIFAR-100 Generalization:
-1. **Backdoor Elimination Without Leakage**: Original Hard FedOSD leaves a residual backdoor leakage of $1.02\%$ on CIFAR-100, whereas Adaptive FedOSD successfully reduces backdoor ASR down to $0.96\%$.
-2. **Dynamic Floor Protection**: Adaptive FedOSD elevates the worst-off client floor during unlearning ($17.10\% \to 17.70\%$, a $+0.60\%$ absolute lift) and protects Client 5 post-recovery ($20.60\% \to 21.60\%$, a $+1.00\%$ absolute gain, $+4.85\%$ relative lift over Hard FedOSD).
-3. **Lowest Performance Disparity**: Adaptive FedOSD achieves the lowest cross-client standard deviation ($3.99\%$) across all methods, proving that dynamic deficit protection generalizes seamlessly to complex 100-class vision benchmarks.
-
----
-
-#### Figure 7: CIFAR-100 Complex Dataset Generalization Benchmark
-![CIFAR-100 Generalization Benchmark](figures/fig7_cifar100_generalization.png)
-* **Panel (a)**: Per-client accuracy across all 9 retained clients on CIFAR-100 ($N=10, NC=10$), demonstrating that Adaptive FedOSD lifts struggling clients (e.g. Client 5: $+1.0\%$ gain) while preserving peak performing clients.
-* **Panel (b)**: Macro metric comparison highlighting eradicated backdoor ASR ($0.96\%$), protected client floor ($21.60\%$), and lowest cohort variance ($3.99\%$).
-
----
-
-### Core Findings & Theoretical Validation
-1. **Consistent Fairness & Worst-Off Client Protection Across Datasets & Regimes**:
-   - On **CIFAR-10 ($U_N=1$)**: Worst-off client accuracy lifted from $3.65\% \to 4.80\%$ ($+31.5\%$ relative gain), std dev reduced from $28.75\% \to 28.26\%$.
-   - On **CIFAR-10 ($U_N=2$)**: Worst-off client accuracy lifted from $13.70\% \to 16.00\%$ ($+16.8\%$ relative gain), ASR suppressed to $0.50\%$.
-   - On **CIFAR-100 ($U_N=1$)**: Worst-off client floor lifted by $+0.60\%$ during unlearning and $+1.00\%$ post-recovery, variance reduced to $3.99\%$, backdoor ASR suppressed to $0.96\%$.
-   - Concurrently **narrows cross-client performance variance** ($28.75\% \to 28.26\%$ cross-seed standard deviation), reducing unfairness and collateral unlearning damage.
-   - Preserves complete unlearning of the target client's backdoor with identical efficacy ($\text{ASR} = 0.02\%$).
-2. **Stiff Regime ($\lambda \ge 50.0$)**:
-   - Soft FedOSD smoothly converges to the hard-orthogonality baseline ($<0.03\%$ difference), confirming the Woodbury identity implementation's numerical stability and theoretical correctness.
-3. **Pareto-Optimal Hyperparameters**:
-   - Setting $\lambda = 1.0$ is under-constrained (drops min client accuracy to $0.0\%$).
-   - $\lambda \approx 20.0$ and $\eta \approx 0.40$ reliably achieve the Pareto optimum balancing high unlearning thoroughness with fair utility distribution.
-
----
-
-## 4. Repository Structure & Key Files
-
-```text
-FedOSD/
-├── tfedplat/
-│   ├── algorithm/unlearning/
-│   │   ├── FedOSD.py                  # Scale-invariant Adaptive FedOSD implementation
-│   │   ├── UnlearnAlgorithm.py        # Base class for federated unlearning routines
-│   │   └── FedOSD_original_backup.py  # Reference hard-orthogonality implementation
-│   ├── task/unlearning/
-│   │   └── UnlearningTask.py          # CLI parser, backdoor injection, metrics logging
-│   └── model/
-│       └── CNN.py                     # CIFAR-10 convolutional architecture
-├── figures/                           # 300-DPI publication figures generated from empirical data
-│   ├── fig1_unlearning_dynamics.png   # ASR eradication and worst-off floor protection
-│   ├── fig2_per_client_distribution.png # Retained client accuracy bar chart
-│   ├── fig3_hyperparameter_pareto.png # Regularization regimes and eta trade-offs
-│   ├── fig4_multiseed_robustness.png  # Multi-seed validation with Standard Error bars
-│   ├── fig5_weight_trajectories.png   # Dynamic protection weights w_i(t) over time
-│   ├── fig6_multiclient_benchmark.png # Multi-client batch unlearning benchmark (UN=2)
-│   └── fig7_cifar100_generalization.png # CIFAR-100 complex dataset generalization benchmark (Goal 4)
-├── run_UnlearningTask.py              # Entry point for training and unlearning
-├── run_sweep.bat                      # Automated GPU hyperparameter sweep (Windows)
-├── run_sweep.sh                       # Automated GPU hyperparameter sweep (Linux)
-├── run_seed2_experiments.bat          # Automated seed 2 validation pipeline
-├── run_un2_experiments.bat            # Automated multi-client (UN=2) pipeline (Windows)
-├── run_un2_experiments.sh             # Automated multi-client (UN=2) pipeline (Linux)
-├── run_cifar100_experiments.bat        # Automated CIFAR-100 end-to-end benchmark pipeline (Windows)
-├── run_cifar100_experiments.sh         # Automated CIFAR-100 end-to-end benchmark pipeline (Linux)
-├── run_cifar100_unlearning.bat         # Automated CIFAR-100 unlearning benchmark suite (Windows)
-├── run_cifar100_unlearning.sh          # Automated CIFAR-100 unlearning benchmark suite (Linux)
-├── evaluate_experiments.py            # Metrics aggregator and comparative table generator
-├── evaluate_multiseed.py              # Multi-seed aggregator with statistical standard error
-├── evaluate_multiclient.py            # Multi-client (UN=1 vs UN=2) benchmark analyzer (Goal 3)
-├── evaluate_cifar100.py               # CIFAR-100 benchmark metrics analyzer (Goal 4)
-├── plot_results.py                    # Publication-grade visualization generator (Goal 2)
-├── .gitignore                         # Clean version control exclusions
-└── README.md                          # Comprehensive documentation
+```
+Comparison / Test Family                  | Metric                | Paired Diff | 95% Bootstrap CI   | Raw p   | Holm p  | Signs
+--------------------------------------------------------------------------------------------------------------------------------------
+[Primary Family 1: Capped vs Hard (m=3 primary metrics)]
+One-sided, unscaled (cap 1.0) vs Hard FedOSD           | Retained Cohort Mean  | +2.04%      | [+1.81%, +2.25%]   | 0.0020  | 0.0060  | 10/10 (+)
+One-sided, unscaled (cap 1.0) vs Hard FedOSD           | Max Collateral Drop   | -3.55%      | [-5.58%, -1.48%]   | 0.0137  | 0.0274  | 9/10 (-)
+One-sided, unscaled (cap 1.0) vs Hard FedOSD           | Worst-Off Floor (Min) | +0.40%      | [-0.30%, +1.37%]   | 0.6523  | 0.6523  | 6/10 (+)
+(Secondary diagnostic)                    | Backdoor ASR          | +0.81%      | [+0.50%, +1.18%]   | 0.0020  | --      | 10/10 (+)
+--------------------------------------------------------------------------------------------------------------------------------------
+[Pairwise Family 2: Capped vs One-sided rescaled to ||g_u|| (m=2 metrics)]
+One-sided, unscaled (cap 1.0) vs Unconstrained         | Worst-Off Floor (Min) | +1.51%      | [+0.62%, +2.45%]   | 0.0039  | 0.0078  | 9/10 (+)
+One-sided, unscaled (cap 1.0) vs Unconstrained         | Retained Cohort Mean  | +0.81%      | [+0.35%, +1.28%]   | 0.0039  | 0.0078  | 9/10 (+)
+--------------------------------------------------------------------------------------------------------------------------------------
+[Pairwise Family 3: Unconstrained vs Hard FedOSD (m=2 metrics)]
+One-sided rescaled to ||g_u|| vs Hard FedOSD    | Worst-Off Floor (Min) | -1.12%      | [-1.80%, -0.53%]   | 0.0039  | 0.0040  | 1/10 (+)
+One-sided rescaled to ||g_u|| vs Hard FedOSD    | Retained Cohort Mean  | +1.23%      | [+0.89%, +1.59%]   | 0.0020  | 0.0040  | 10/10 (+)
 ```
 
+* **Statistical Interpretation**: In historical regime R1, step-norm capping achieved a statistically significant increase in retained cohort mean ($+2.04\%$, Holm $p=0.0060$) and reduction in collateral degradation ($-3.55\%$, Holm $p=0.0274$) over plain Hard. Floor point estimate was $+0.40\%$ with CI spanning zero ($[-0.30\%, +1.37\%]$). Both floors ($2.72\%$ and $4.23\%$) represent severe degradation on scarce classes, but capping avoids the additional drop of unconstrained projection ($-1.12\%$, Holm $p=0.0078$). All findings on seeds 11–20 remain exploratory.
+
 ---
 
-## 5. Quick Start & Reproduction
+## 5. Negative Results (Archived Variants)
 
-### Prerequisites
-- Python 3.10+
-- PyTorch with CUDA support (recommended: CUDA 12.4):
-  ```bash
-  pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
-  ```
-- Matplotlib & Seaborn for visualization:
-  ```bash
-  pip install matplotlib seaborn
-  ```
+### 5.1 Dynamic Client-Adaptive Weighting ($\eta > 0$)
+Variants attempting to dynamically scale client protection penalties based on local metrics were evaluated and archived:
+1. **Deficit-Driven (`--weight_mode deficit`)**, **Baseline Drop-Driven (`--weight_mode drop`)**, and **Gradient Conflict (`--weight_mode conflict`)**: On exploratory seeds 1–2, adaptive weighting underperformed Hard FedOSD across worst-off floor, cohort mean, and collateral drop, while weights stayed within $\sim 1.0$ point of uniform.
+2. **Validation Split Leakage Control**: Prior experiments using test-set accuracy feedback artificially inflated floor estimates from $\approx 9\%$ to $\approx 42\%$. Enforcing strict evaluation on held-out validation data removed this artifact. Adaptive variants provided no measurable advantage over uniform weights once test feedback was eliminated.
+3. **Screening Matrix for E1 and E2 (Tuning Seed 101)**:
+   Below are the screening evaluations conducted on tuning seed 101 under exploratory regime R1:
 
-### Step 1: Pretrain the FL Global Model
-Train the initial global model using FedAvg (CIFAR-10, 10 clients, backdoor on unlearned client):
+| Variant | Formulation / Knobs | Floor (%) | Mean (%) | ASR (%) | Forget Clean (%) | MIA AUC | Screening Outcome |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Hard FedOSD** | Baseline reference ($\lambda=\infty$) | 26.67% | 42.26% | 0.30% | 27.67% | 0.4970 | *Baseline* |
+| **E1 ($\lambda=40, \eta=0.4$)** | Two-sided soft sweep (`wm_drop`) | 26.67% | 41.89% | 0.24% | 26.50% | 0.4972 | Underperformed Hard Mean |
+| **E1 ($\lambda=50, \eta=0.4$)** | Two-sided soft sweep (`wm_drop`) | 26.50% | 41.98% | 0.26% | 26.50% | 0.4971 | Underperformed Hard Mean |
+| **E2 ($\Delta_{\text{ref}}=10\%$)** | Per-client interpolation (`soft20`) | 25.50% | 42.09% | 0.28% | 25.83% | 0.4967 | Floor drop (-1.17%) |
+| **E2 ($\Delta_{\text{ref}}=5\%$)** | Per-client interpolation (`soft20`) | 25.17% | 42.09% | 0.30% | 25.83% | 0.4965 | Floor drop (-1.50%) |
+| **E3_cap1.0** | Step-Norm One-sided, unscaled (cap 1.0) | **26.83%** | **43.59%** | 0.44% | **29.17%** | 0.4952 | **Adopted Primary Method** |
+
+### 5.2 Uniform Soft Relaxation ($\lambda = 20$)
+Permitting projection vectors to enter the negative half-space ($\hat{g}_i^T d < 0$) via quadratic soft penalties degraded worst-off client floor (falling to $1.43\%$ at unlearning round 100) and increased collateral drop to $21.54\%$ without boosting cohort mean.
+
+---
+
+## 6. Empirical Visualizations & Figures
+
+Visualizations produced from the benchmark suite:
+
+* **Figure 1**: Backdoor Eradication Dynamics and Worst-Off Client Trajectories ([`figures/fig1_unlearning_dynamics.png`](figures/fig1_unlearning_dynamics.png))
+* **Figure 2**: Per-Client Accuracy Distribution Across Retained Clients Showing Data-Scarcity Floor ([`figures/fig2_per_client_distribution.png`](figures/fig2_per_client_distribution.png))
+* **Figure 3**: Step-Norm Capping Control and Empirical Pareto Trade-off Frontier ([`figures/fig3_hyperparameter_pareto.png`](figures/fig3_hyperparameter_pareto.png))
+* **Figure 4**: Multi-Seed Macro Distributions Across Reporting Seeds ([`figures/fig4_multiseed_robustness.png`](figures/fig4_multiseed_robustness.png))
+* **Figure 8**: Matched-Strength Utility Frontier vs. Unlearning Displacement ([`figures/fig_frontier_strength.png`](figures/fig_frontier_strength.png))
+
+### Appendix: Exploratory & Archived Figures
+* **Figure 6**: Batch Unlearning ($U_N=2$) Multi-Client Benchmark on Exploratory Seed 1 ([`figures/fig6_multiclient_benchmark.png`](figures/fig6_multiclient_benchmark.png))
+* **Figure 7**: CIFAR-100 Complex Dataset Generalization Benchmark on Exploratory Seed 1 ([`figures/fig7_cifar100_generalization.png`](figures/fig7_cifar100_generalization.png))
+* **Figure 5**: Archived Dynamic Weight Trajectories for Adaptive Variants demonstrating tight clustering near 1.0 ([`figures/fig5_weight_trajectories.png`](figures/fig5_weight_trajectories.png))
+
+---
+
+## 7. Limitations
+
+1. **Training Regime Sensitivity**: Pretraining learning rate and round count significantly influence unlearning dynamics; results in R1 reflect an under-trained pretrain checkpoint relative to R2.
+2. **Unlearning Strength Confounding**: One-sided updates unlearn less aggressively in terms of raw ASR ($0.94\%$ vs $0.13\%$), making strength-matched displacement controls essential for fair comparison.
+3. **Exploratory Status of Seeds 11–20**: Benchmarks in Section 4 reflect exploratory exploration; formal confirmation requires fresh, previously unobserved seeds 21–30 per [`SUCCESS_CRITERIA_v2.md`](SUCCESS_CRITERIA_v2.md).
+4. **Architectural Scope**: Current evaluations use standard CNN backbones on 10-client federated partitions.
+5. **Backdoor Attack Formulation**: Targets are evaluated using pattern-based triggers rather than clean class removal.
+
+---
+
+## 8. Reproducibility & Execution Runbook
+
+All runs embed commit hash, CLI arguments, and random seeds in their output JSON files.
+
+### Full Pipeline Reproduction Script
+To execute the complete pipeline across seeds in primary regime R2:
+
 ```bash
-python run_UnlearningTask.py --seed 1 --device 0 --module CNN_CIFAR10 --algorithm FedAvg --dataloader DataLoader_cifar10_pat --N 10 --NC 2 --balance True --B 200 --C 1.0 --R 2000 --UR 0 --E 1 --lr 0.05 --decay 0.999 --step_type bgd --unlearn_cn 1 --unlearn_pretrain True --save_model True --test_interval 50
+# Run complete pipeline on confirmation seeds
+bash run_all.sh 21 22 23 24 25 26 27 28 29 30
 ```
-*(Pretrained checkpoint for seed 1 is included at `UnlearningTask/.../seed1_unlearn_task_pretrained_model.pth`)*.
 
-### Step 2: Run Adaptive FedOSD
-Execute unlearning with custom $\lambda$ and adaptation rate $\eta$:
+### Individual Execution Commands
+
 ```bash
-python run_UnlearningTask.py --seed 1 --device 0 --module CNN_CIFAR10 --algorithm FedOSD --dataloader DataLoader_cifar10_pat --N 10 --NC 2 --balance True --B 200 --C 1.0 --R 200 --UR 100 --E 1 --decay 0.999 --step_type bgd --unlearn_cn 1 --save_model True --lr 0.0004 --r_lr 1e-6 --adap_lam 20.0 --adap_weight_eta 0.4
+# 1. Pretraining Checkpoint (Primary Regime R2: lr=0.05, R=100)
+python run_UnlearningTask.py --seed 21 --device 0 --module CNN_CIFAR10 --algorithm FedAvg \
+  --dataloader DataLoader_cifar10_pat --N 10 --NC 2 --balance True --B 200 --C 1.0 \
+  --R 100 --UR 100 --E 1 --decay 0.999 --step_type bgd --unlearn_cn 1 --save_model True \
+  --lr 0.05 --unlearn_pretrain True
+
+# 2. Retrain from Scratch (R=200 Reference for End of Unlearning)
+python run_UnlearningTask.py --seed 21 --device 0 --module CNN_CIFAR10 --algorithm FedAvg \
+  --dataloader DataLoader_cifar10_pat --N 10 --NC 2 --balance True --B 200 --C 1.0 \
+  --R 200 --UR 0 --E 1 --decay 0.999 --step_type bgd --unlearn_cn 1 --save_model True \
+  --lr 0.05 --retrain True --test_interval 5
+
+# 3. Retrain from Scratch (R=300 Reference for Post-Recovery)
+python run_UnlearningTask.py --seed 21 --device 0 --module CNN_CIFAR10 --algorithm FedAvg \
+  --dataloader DataLoader_cifar10_pat --N 10 --NC 2 --balance True --B 200 --C 1.0 \
+  --R 300 --UR 0 --E 1 --decay 0.999 --step_type bgd --unlearn_cn 1 --save_model True \
+  --lr 0.05 --retrain True --test_interval 5
+
+# 4. Hard FedOSD rescaled to ||g_u|| (r_lr=1e-4)
+python run_UnlearningTask.py --seed 21 --device 0 --module CNN_CIFAR10 --algorithm FedOSD \
+  --dataloader DataLoader_cifar10_pat --N 10 --NC 2 --balance True --B 200 --C 1.0 \
+  --R 200 --UR 100 --E 1 --decay 0.999 --step_type bgd --unlearn_cn 1 --save_model True \
+  --lr 0.0004 --r_lr 1e-4 --proj_mode hard --adap_lam 100000.0 --adap_weight_eta 0.0
+
+# 5. Soft Uniform Baseline (lambda=20, r_lr=1e-4)
+python run_UnlearningTask.py --seed 21 --device 0 --module CNN_CIFAR10 --algorithm FedOSD \
+  --dataloader DataLoader_cifar10_pat --N 10 --NC 2 --balance True --B 200 --C 1.0 \
+  --R 200 --UR 100 --E 1 --decay 0.999 --step_type bgd --unlearn_cn 1 --save_model True \
+  --lr 0.0004 --r_lr 1e-4 --proj_mode soft --adap_lam 20.0 --adap_weight_eta 0.0
+
+# 6. One-sided rescaled to ||g_u|| Hard (lambda=10^5, r_lr=1e-4)
+python run_UnlearningTask.py --seed 21 --device 0 --module CNN_CIFAR10 --algorithm FedOSD \
+  --dataloader DataLoader_cifar10_pat --N 10 --NC 2 --balance True --B 200 --C 1.0 \
+  --R 200 --UR 100 --E 1 --decay 0.999 --step_type bgd --unlearn_cn 1 --save_model True \
+  --lr 0.0004 --r_lr 1e-4 --proj_mode one_sided --adap_lam 100000.0 --adap_weight_eta 0.0
+
+# 7. Step-Norm One-sided, unscaled (cap 1.0) Hard (cap=1.0, Frozen Method)
+python run_UnlearningTask.py --seed 21 --device 0 --module CNN_CIFAR10 --algorithm FedOSD \
+  --dataloader DataLoader_cifar10_pat --N 10 --NC 2 --balance True --B 200 --C 1.0 \
+  --R 200 --UR 100 --E 1 --decay 0.999 --step_type bgd --unlearn_cn 1 --save_model True \
+  --lr 0.0004 --r_lr 1e-4 --proj_mode one_sided --adap_lam 100000.0 --adap_weight_eta 0.0 \
+  --weight_mode uniform --cap_hard_ratio 1.0
 ```
 
-#### CLI Parameters for Adaptive FedOSD:
-- `--adap_lam`: Soft-constraint strength $\lambda$ (default: `1.0`). Use `20.0` for balanced adaptive unlearning or `100.0` for hard-orthogonal approximation.
-- `--adap_weight_eta`: Adaptation rate $\eta$ for per-client deficit weighting (default: `0.05`). Use `0.2 - 0.4` for active fairness protection.
-
-### Step 3: Run Full Parameter Sweeps
-- **On Windows**:
-  ```powershell
-  .\run_sweep.bat
-  ```
-- **On Linux / MacOS**:
-  ```bash
-  chmod +x run_sweep.sh
-  ./run_sweep.sh
-  ```
-
-### Step 4: Evaluate Metrics & Generate Figures
-- Summarize single-seed sweeps:
-  ```bash
-  python evaluate_experiments.py
-  ```
-- Summarize multi-seed cross-validation with Standard Error:
-  ```bash
-  python evaluate_multiseed.py
-  ```
-- Generate all 300-DPI publication figures in `figures/`:
-  ```bash
-  python plot_results.py
-  ```
-  .\run_sweep.bat
-  ```
-- **On Linux / GPU Cluster**:
-  ```bash
-  chmod +x run_sweep.sh
-  ./run_sweep.sh
-  ```
-
-### Step 4: Evaluate Single-Seed & Multi-Seed Runs
-- **Single-Seed Sweep Breakdown**:
-  ```bash
-  python evaluate_experiments.py
-  ```
-- **Multi-Seed Aggregated Statistics**:
-  ```bash
-  python evaluate_multiseed.py
-  ```
+### Statistical Evaluation
+```bash
+python evaluate_reporting.py
+python eval_matched_strength.py
+python plot_results.py
+```
 
 ---
 
-## 6. Citation
+## 9. Citation
 
 ```bibtex
 @inproceedings{pan2025federated,
