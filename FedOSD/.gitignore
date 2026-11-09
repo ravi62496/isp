@@ -16,6 +16,14 @@ tfedplat/data/
 tfedplat/pool/
 *.npy
 UnlearningTask/**/backdoors/
+client_2_backdoor.npy
+**/client_2_backdoor.npy
+
+# Experiment outputs and figures
+results/
+results_confirm/
+results_dryrun/
+figures/
 
 # OS / Editor artifacts
 .vscode/

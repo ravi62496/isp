@@ -27,6 +27,13 @@
 - **Decay**: `0.999`
 - **Gradient Clipping**: `g_clip = 1.0`
 - **Unlearn Target Portion**: Client chosen deterministically per partition seed; 80% clean training data poisoned with backdoor trigger during pretrain.
+- **Exact Pretrain CLI Command**:
+  ```bash
+  python -u run_UnlearningTask.py --seed <seed> --device 0 --module CNN_CIFAR10 \
+    --dataloader DataLoader_cifar10_pat --N 10 --NC 2 --balance True --B 200 --C 1.0 \
+    --E 1 --decay 0.999 --step_type bgd --unlearn_cn 1 --save_model True \
+    --algorithm FedAvg --R 100 --UR 0 --lr 0.05 --unlearn_pretrain True
+  ```
 
 ---
 
@@ -58,6 +65,14 @@
 - **Learning Rate**: `lr = 0.05`
 - **Decay**: `0.999`
 - **Gradient Clipping**: `g_clip = 1.0`
+- **Test Interval**: `--test_interval 5` (evaluates metrics every 5 communication rounds, producing 61 evaluations)
+- **Exact Retrain CLI Command**:
+  ```bash
+  python -u run_UnlearningTask.py --seed <seed> --device 0 --module CNN_CIFAR10 \
+    --dataloader DataLoader_cifar10_pat --N 10 --NC 2 --balance True --B 200 --C 1.0 \
+    --E 1 --decay 0.999 --step_type bgd --unlearn_cn 1 --save_model True \
+    --algorithm FedAvg --retrain True --test_interval 5 --R 300 --UR 0 --lr 0.05
+  ```
 
 ---
 
@@ -159,3 +174,37 @@ else:
    - Hard closed-form solve: **Median $= 2.85\text{ ms/round}$** (mean: $8.71\text{ ms/round}$)
    - Capped NNLS solve: **Median $= 2.01\text{ ms/round}$** (mean: $3.85\text{ ms/round}$)
    - Both account for $< 0.1\%$ of total FL round time.
+
+5. **Exact Applied Path Lengths and Triangle Inequality Verification**:
+   - Baseline Hard FedOSD (Seed 101): Exact applied path length $\sum \|d_{\text{applied}}\| = \mathbf{1040.8381}$. Bound $\text{lr} \times 1040.8381 = 0.4163 > \text{displacement } 0.3640$ (ratio $0.8743$, strictly satisfying the triangle inequality).
+   - Baseline Hard FedOSD (Seed 999): Exact applied path length $\sum \|d_{\text{applied}}\| = \mathbf{934.4363}$. Bound $\text{lr} \times 934.4363 = 0.3738 > \text{displacement } 0.3243$ (ratio $0.8676$, strictly satisfying the triangle inequality).
+   - Hard-scaled $s=0.54$ (Seed 101): Exact applied path length $\sum \|d_{\text{applied}}\| = \mathbf{749.0776}$. Bound $\text{lr} \times 749.0776 = 0.2996 > \text{displacement } 0.2691$ (ratio $0.8981$, strictly satisfying the triangle inequality).
+   - Hard-scaled $s=0.54$ (Seed 999): Exact applied path length $\sum \|d_{\text{applied}}\| = \mathbf{681.6123}$. Bound $\text{lr} \times 681.6123 = 0.2726 > \text{displacement } 0.2430$ (ratio $0.8913$, strictly satisfying the triangle inequality).
+   - Capped One-Sided cap 1.0 (Seed 999): Exact applied path length $\sum \|d_{\text{applied}}\| = \mathbf{645.1115}$. Bound $\text{lr} \times 645.1115 = 0.2580 > \text{displacement } 0.2400$ (ratio $0.9301$, strictly satisfying the triangle inequality).
+   - **Historical Logging Artifact**: Logs recorded before the logging fix recorded unscaled $\|d_{\text{hard}}\|$ for Hard and unscaled $\|g_u\|$ for Hard-scaled. The true physical descent steps applied to the network weights always strictly adhered to the triangle inequality.
+
+---
+
+## 4. Hardware and Execution Environment Specification
+
+To ensure exact reproducibility across machines and executions, all confirmatory experiments are frozen to the following software and hardware environment:
+- **Operating System**: Windows 11
+- **Python Version**: 3.12.10
+- **PyTorch Version**: 2.6.0+cu124 (`torch==2.6.0+cu124`)
+- **Torchvision Version**: 0.21.0+cu124 (`torchvision==0.21.0+cu124`)
+- **NumPy Version**: 2.5.4 (`numpy==2.5.4`)
+- **SciPy Version**: 1.18.1 (`scipy==1.18.1`)
+- **CUDA Version**: 12.4
+- **cuDNN Version**: 90100 (cuDNN 9.1.0)
+- **NVIDIA GPU Driver**: 621.01
+- **GPU Architecture**: NVIDIA GeForce RTX 3050 6GB Laptop GPU (Ampere GA107, 6GB GDDR6 VRAM, Compute Capability 8.6)
+- **Execution Mode**: Sequential single-job execution ($S=0.89$), logging GPU temperature and graphics/memory clocks per run
+- **Deterministic Settings**:
+  - `torch.manual_seed(seed)`
+  - `torch.cuda.manual_seed_all(seed)`
+  - `np.random.seed(seed)`
+  - `random.seed(seed)`
+  - `torch.backends.cudnn.deterministic = True`
+  - `torch.backends.cudnn.benchmark = False`
+  - `torch.use_deterministic_algorithms(True, warn_only=True)`
+  - `os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"`

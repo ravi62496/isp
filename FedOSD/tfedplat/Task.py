@@ -68,6 +68,7 @@ class BasicTask:
         parser = argparse.ArgumentParser()
         
         parser.add_argument('--seed', help='seed', type=int, default=1)
+        parser.add_argument('--model_init_seed', help='model initialization seed', type=int, default=-1)
         
         parser.add_argument('--device', help='device: -1, 0, 1, or ...', type=int, default=0)
         

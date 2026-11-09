@@ -371,7 +371,19 @@ class Algorithm:
         if save_name is None:
             save_name = self.save_name
         
+        import subprocess, sys
+        try:
+            git_hash = subprocess.check_output(['git', 'rev-parse', 'HEAD'], stderr=subprocess.DEVNULL).decode('ascii').strip()
+        except Exception:
+            git_hash = 'unknown'
+
         save_dict = {'params': self.params}
+        save_dict['provenance'] = {
+            'git_commit': git_hash,
+            'cli_args': sys.argv,
+            'seed': self.params.get('seed'),
+            'eval_version': '1.0'
+        }
         save_dict['passed_communication_round'] = self.current_comm_round
         save_dict['current_online_client_ids'] = str([online_client.id for online_client in self.online_client_list])
         save_dict['algorithm_log'] = self.algorithm_log

@@ -25,6 +25,7 @@ plt.rcParams.update({
 
 OUTPUT_DIR = "figures"
 BASE_DIR = "UnlearningTask/CNN_CIFAR10/cifar10 pat balanced B200 NC2 N10/UN1/E1/C1.0/FedOSD"
+FEDAVG_DIR = "UnlearningTask/CNN_CIFAR10/cifar10 pat balanced B200 NC2 N10/UN1/E1/C1.0/FedAvg"
 
 def ensure_dir(d):
     if not os.path.exists(d):
@@ -35,31 +36,18 @@ def load_json(path):
         return json.load(f)
 
 def extract_client_metrics(data):
-    """
-    Extracts round-by-round ASR and retained client accuracies.
-    Returns:
-        rounds (np.ndarray): 0..100
-        asr_curve (np.ndarray): 1D array of ASR per round
-        retained_curves (np.ndarray): shape (n_retained, n_rounds)
-        unlearn_cid (int)
-    """
     client_hist = data["metric_log"]["client_metric_history"]
-    unlearn_cid = None
-    asr_curve = None
+    unlearn_cid = data.get("params", {}).get("unlearn_client_id_list", [7])[0]
     
-    for cid, hist in enumerate(client_hist):
-        if "backdoor_test_accuracy" in hist and hist["backdoor_test_accuracy"]:
-            unlearn_cid = cid
-            asr_curve = np.array(hist["backdoor_test_accuracy"])
-            break
-            
+    asr_curve = np.array(client_hist[unlearn_cid].get("backdoor_test_accuracy", client_hist[unlearn_cid].get("test_accuracy", [])))
+    
     retained_curves = []
     for cid, hist in enumerate(client_hist):
         if cid != unlearn_cid and "test_accuracy" in hist and hist["test_accuracy"]:
             retained_curves.append(hist["test_accuracy"])
             
     retained_curves = np.array(retained_curves)
-    n_rounds = len(asr_curve) if asr_curve is not None else retained_curves.shape[1]
+    n_rounds = len(asr_curve) if len(asr_curve) > 0 else retained_curves.shape[1]
     rounds = np.arange(n_rounds)
     return rounds, asr_curve, retained_curves, unlearn_cid
 
@@ -67,41 +55,40 @@ def extract_client_metrics(data):
 # Figure 1: Unlearning Dynamics (ASR Eradication & Floor Protection)
 # =========================================================================
 def plot_figure_1_dynamics():
-    hard_file = os.path.join(BASE_DIR, "seed1 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0_unlearn.json")
-    soft_file = os.path.join(BASE_DIR, "seed1 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 lam20.0 eta0.0_unlearn.json")
-    adap_file = os.path.join(BASE_DIR, "seed1 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 lam20.0 eta0.4_unlearn.json")
+    # Use Seed 11 reporting run
+    hard_file = os.path.join(BASE_DIR, "seed11 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 proj_hard lam100000.0 eta0.0_unlearn.json")
+    soft_file = os.path.join(BASE_DIR, "seed11 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 proj_two_sided wm_uniform lam20.0 eta0.0_unlearn.json")
+    capped_file = os.path.join(BASE_DIR, "seed11 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 proj_one_sided_cap1.0 wm_uniform lam100000.0_unlearn.json")
     
     r_hard, asr_hard, ret_hard, _ = extract_client_metrics(load_json(hard_file))
     r_soft, asr_soft, ret_soft, _ = extract_client_metrics(load_json(soft_file))
-    r_adap, asr_adap, ret_adap, _ = extract_client_metrics(load_json(adap_file))
+    r_cap, asr_cap, ret_cap, _ = extract_client_metrics(load_json(capped_file))
     
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 7), sharex=True)
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8.5, 7.2), sharex=True)
     
     # 1. Top Panel: ASR Eradication
-    ax1.plot(r_hard, asr_hard, label="Original FedOSD (Hard)", color="#7f7f7f", linestyle="--")
+    ax1.plot(r_hard, asr_hard, label="Hard FedOSD (Baseline)", color="#7f7f7f", linestyle="--")
     ax1.plot(r_soft, asr_soft, label=r"Soft Uniform ($\lambda=20, \eta=0.0$)", color="#1f77b4", linestyle="-.")
-    ax1.plot(r_adap, asr_adap, label=r"Adaptive FedOSD ($\lambda=20, \eta=0.40$)", color="#d62728", linestyle="-", linewidth=2.5)
-    ax1.set_ylabel("Unlearn Attack Success Rate (ASR %)")
-    ax1.set_title("(a) Backdoor Trigger Elimination Dynamics", fontweight="bold")
+    ax1.plot(r_cap, asr_cap, label=r"Step-Norm Capped One-Sided (cap=1.0)", color="#2ca02c", linestyle="-", linewidth=2.2)
+    ax1.set_ylabel("Backdoor ASR (%)")
+    ax1.set_title("(a) Backdoor Trigger Elimination Dynamics (Reporting Seed 11)", fontweight="bold")
     ax1.legend(loc="upper right", frameon=True)
-    ax1.set_ylim(-2, 95)
-    
-    # Highlight full unlearning threshold
+    ax1.set_ylim(-1, 35)
     ax1.axhline(1.0, color="gray", linestyle=":", alpha=0.7)
-    ax1.text(60, 5, "Unlearned Threshold (< 1%)", color="gray", fontstyle="italic")
+    ax1.text(50, 2.5, "Unlearned Threshold (< 1.0%)", color="gray", fontstyle="italic", fontsize=9)
     
     # 2. Bottom Panel: Minimum Client Accuracy (Worst-Off Protection)
     min_hard = np.min(ret_hard, axis=0)
     min_soft = np.min(ret_soft, axis=0)
-    min_adap = np.min(ret_adap, axis=0)
+    min_cap = np.min(ret_cap, axis=0)
     
-    ax2.plot(r_hard, min_hard, label="Original FedOSD (Hard)", color="#7f7f7f", linestyle="--")
+    ax2.plot(r_hard, min_hard, label="Hard FedOSD (Baseline)", color="#7f7f7f", linestyle="--")
     ax2.plot(r_soft, min_soft, label=r"Soft Uniform ($\lambda=20, \eta=0.0$)", color="#1f77b4", linestyle="-.")
-    ax2.plot(r_adap, min_adap, label=r"Adaptive FedOSD ($\lambda=20, \eta=0.40$)", color="#d62728", linestyle="-", linewidth=2.5)
+    ax2.plot(r_cap, min_cap, label=r"Step-Norm Capped One-Sided (cap=1.0)", color="#2ca02c", linestyle="-", linewidth=2.2)
     
-    ax2.set_xlabel("Unlearning Rounds")
+    ax2.set_xlabel("Unlearning Rounds (UR = 100)")
     ax2.set_ylabel("Worst-Off Client Accuracy (%)")
-    ax2.set_title("(b) Worst-Off Client Floor Protection", fontweight="bold")
+    ax2.set_title("(b) Worst-Off Client Floor Protection Trajectory", fontweight="bold")
     ax2.legend(loc="lower right", frameon=True)
     
     plt.tight_layout()
@@ -111,43 +98,38 @@ def plot_figure_1_dynamics():
     print(f"Generated: {out_path}")
 
 # =========================================================================
-# Figure 2: Per-Client Accuracy Distribution & Fairness Lift
+# Figure 2: Per-Client Accuracy Distribution & Fairness
 # =========================================================================
 def plot_figure_2_client_distribution():
-    soft_file = os.path.join(BASE_DIR, "seed1 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 lam20.0 eta0.0_unlearn.json")
-    adap_file = os.path.join(BASE_DIR, "seed1 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 lam20.0 eta0.4_unlearn.json")
+    hard_file = os.path.join(BASE_DIR, "seed11 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 proj_hard lam100000.0 eta0.0_unlearn.json")
+    capped_file = os.path.join(BASE_DIR, "seed11 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 proj_one_sided_cap1.0 wm_uniform lam100000.0_unlearn.json")
+    onesided_file = os.path.join(BASE_DIR, "seed11 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 proj_one_sided wm_uniform lam100000.0 eta0.0_unlearn.json")
     
-    _, _, ret_soft, ucid = extract_client_metrics(load_json(soft_file))
-    _, _, ret_adap, _ = extract_client_metrics(load_json(adap_file))
+    _, _, ret_hard, ucid = extract_client_metrics(load_json(hard_file))
+    _, _, ret_cap, _ = extract_client_metrics(load_json(capped_file))
+    _, _, ret_os, _ = extract_client_metrics(load_json(onesided_file))
     
-    final_soft = ret_soft[:, -1]
-    final_adap = ret_adap[:, -1]
+    final_hard = ret_hard[:, -1]
+    final_cap = ret_cap[:, -1]
+    final_os = ret_os[:, -1]
     
-    # Retained client IDs
     client_ids = [c for c in range(10) if c != ucid]
     x = np.arange(len(client_ids))
-    width = 0.38
+    width = 0.28
     
     fig, ax = plt.subplots(figsize=(10, 5))
     
-    bars1 = ax.bar(x - width/2, final_soft, width, label=r"Soft Uniform ($\lambda=20, \eta=0.0$)", color="#4a90e2", alpha=0.85)
-    bars2 = ax.bar(x + width/2, final_adap, width, label=r"Adaptive FedOSD ($\lambda=20, \eta=0.40$)", color="#e74c3c", alpha=0.9)
+    ax.bar(x - width, final_hard, width, label="Hard FedOSD (Baseline)", color="#7f7f7f", alpha=0.85)
+    ax.bar(x, final_os, width, label="One-Sided Hard (Unconstrained)", color="#d62728", alpha=0.8)
+    ax.bar(x + width, final_cap, width, label="Step-Norm Capped (cap=1.0)", color="#2ca02c", alpha=0.9)
     
-    # Highlight worst-off client lift
-    min_idx = np.argmin(final_soft)
-    ax.annotate(f"Lift: {final_soft[min_idx]:.1f}% -> {final_adap[min_idx]:.1f}%\n(+14.5% worst-off)",
-                xy=(x[min_idx] + width/2, final_adap[min_idx]),
-                xytext=(x[min_idx] - 0.2, final_adap[min_idx] + 12),
-                arrowprops=dict(facecolor='black', shrink=0.08, width=1.5, headwidth=6),
-                fontweight='bold', fontsize=9)
-    
-    ax.set_xlabel("Retained Client Index")
+    ax.set_xlabel("Retained Client Index (Seed 11)")
     ax.set_ylabel("Final Test Accuracy (%)")
-    ax.set_title("Per-Client Accuracy Comparison: Uniform vs. Adaptive Soft FedOSD", fontweight="bold")
+    ax.set_title("Per-Client Accuracy: Step-Norm Capping Prevents One-Sided Floor Collapse", fontweight="bold")
     ax.set_xticks(x)
     ax.set_xticklabels([f"Client {c}" for c in client_ids])
     ax.legend(loc="upper right", frameon=True)
-    ax.set_ylim(0, 95)
+    ax.set_ylim(0, 60)
     
     plt.tight_layout()
     out_path = os.path.join(OUTPUT_DIR, "fig2_per_client_distribution.png")
@@ -159,48 +141,45 @@ def plot_figure_2_client_distribution():
 # Figure 3: Hyperparameter Trade-off & Pareto Frontier
 # =========================================================================
 def plot_figure_3_hyperparameter_pareto():
-    etas = [0.0, 0.20, 0.40]
-    min_accs = [6.20, 6.90, 7.10]
-    stds = [30.16, 29.80, 29.45]
-    means = [47.70, 47.76, 47.82]
+    # Data from Step 3 Screening on Seed 101
+    cap_ratios = [1.0, 1.25, float('inf')]
+    cap_labels = ["cap=1.0\n(Hard norm)", "cap=1.25\n(Mild slack)", "Unconstrained\n(One-Sided)"]
+    floors = [26.83, 26.83, 2.23] # seed 101 capped vs unconstrained reporting avg
+    means = [43.59, 43.63, 34.56]
     
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.5))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.6))
     
-    # Left: Adaptation Rate eta vs. Min Client Accuracy & Standard Deviation
-    color = '#2ca02c'
-    ax1.set_xlabel(r"Adaptation Rate $\eta$ (at $\lambda=20.0$)")
-    ax1.set_ylabel("Worst-Off Client Accuracy (%)", color=color, fontweight="bold")
-    line1 = ax1.plot(etas, min_accs, color=color, marker='o', linewidth=2.5, label="Min Client Acc (Floor)")
-    ax1.tick_params(axis='y', labelcolor=color)
-    ax1.set_ylim(5.5, 7.5)
+    # Left: Step Norm Cap vs Floor and Mean
+    x = np.arange(len(cap_labels))
+    w = 0.35
+    ax1.bar(x - w/2, floors, w, label="Worst-Off Floor (%)", color="#2ca02c", alpha=0.85)
+    ax1.bar(x + w/2, means, w, label="Cohort Mean (%)", color="#1f77b4", alpha=0.85)
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(cap_labels)
+    ax1.set_ylabel("Accuracy (%)")
+    ax1.set_title("(a) Step-Norm Control Effect on Retention", fontweight="bold")
+    ax1.legend(loc="upper right", frameon=True)
+    ax1.set_ylim(0, 52)
     
-    ax1_twin = ax1.twinx()
-    color2 = '#d62728'
-    ax1_twin.set_ylabel("Cohort Std Deviation (Inequality %)", color=color2, fontweight="bold")
-    line2 = ax1_twin.plot(etas, stds, color=color2, marker='s', linestyle='--', linewidth=2.5, label="Std Dev (Variance)")
-    ax1_twin.tick_params(axis='y', labelcolor=color2)
-    ax1_twin.set_ylim(29.0, 30.5)
+    # Right: Multi-seed Pareto trade-off (Floor vs Forget Clean Utility)
+    methods = [
+        ("Hard", 3.83, 3.35, "#7f7f7f", "s"),
+        ("Soft Uniform", 3.85, 3.37, "#1f77b4", "^"),
+        ("One-Sided Hard", 2.72, 2.20, "#d62728", "x"),
+        ("Capped (cap=1.0)", 4.23, 3.87, "#2ca02c", "o"),
+        ("Retrain (Reference)", 28.62, 29.18, "#e67e22", "*")
+    ]
     
-    ax1.set_title(r"(a) Impact of Adaptation Rate $\eta$", fontweight="bold")
-    
-    # Combined legend
-    lines = line1 + line2
-    labels = [l.get_label() for l in lines]
-    ax1.legend(lines, labels, loc='center left', frameon=True)
-    
-    # Right: Stiffness lambda vs. Retained Utility vs. ASR
-    lambdas = ["1.0\n(Over-Loose)", "20.0\n(Optimal)", "50.0\n(Stiff)", "100.0\n(Very Stiff)", r"$\infty$" + "\n(Hard)"]
-    lam_means = [38.38, 47.82, 53.68, 53.69, 53.70]
-    lam_asrs = [0.00, 0.02, 0.08, 0.08, 0.08]
-    
-    ax2.plot(range(5), lam_means, marker='^', color='#1f77b4', linewidth=2.5, label="Retained Mean Acc (%)")
-    ax2.set_xticks(range(5))
-    ax2.set_xticklabels(lambdas)
-    ax2.set_xlabel(r"Constraint Stiffness $\lambda$")
-    ax2.set_ylabel("Retained Client Mean Accuracy (%)")
-    ax2.set_title(r"(b) Regularization Regimes Across $\lambda$", fontweight="bold")
-    ax2.legend(loc="lower right", frameon=True)
-    ax2.set_ylim(30, 60)
+    for name, fl, fc, col, m in methods:
+        ms = 12 if m == '*' else 8
+        ax2.scatter(fc, fl, color=col, marker=m, s=ms*10, label=name, zorder=5)
+        ax2.annotate(name, (fc, fl), textcoords="offset points", xytext=(8, -4), fontsize=9)
+        
+    ax2.set_xlabel("Forget-Set Clean Utility (%)")
+    ax2.set_ylabel("Worst-Off Client Floor (%)")
+    ax2.set_title("(b) Empirical Pareto Trade-off Across 10 Seeds", fontweight="bold")
+    ax2.set_xlim(-1, 32)
+    ax2.set_ylim(0, 32)
     
     plt.tight_layout()
     out_path = os.path.join(OUTPUT_DIR, "fig3_hyperparameter_pareto.png")
@@ -209,46 +188,50 @@ def plot_figure_3_hyperparameter_pareto():
     print(f"Generated: {out_path}")
 
 # =========================================================================
-# Figure 4: Multi-Seed Statistical Robustness
+# Figure 4: Multi-Seed Statistical Robustness Across 10 Fresh Reporting Seeds
 # =========================================================================
 def plot_figure_4_multiseed_robustness():
-    # Seeds 1 & 2 aggregated metrics
-    categories = ["Worst-Off Client\nAccuracy (Min %)", "Retained Cohort\nAccuracy (Mean %)", "Backdoor Attack\nSuccess Rate (ASR %)"]
+    # 10 Fresh Reporting Seeds (Seeds 11-20) Post-Recovery Stage
+    categories = ["Worst-Off Client\nFloor (Min %)", "Retained Cohort\nAccuracy (Mean %)", "Forget-Set Clean\nUtility (%)"]
     
-    # Hard FedOSD: min=17.50 (se 9.00), mean=55.87 (se 2.17), asr=0.06
-    hard_vals = [17.50, 55.87, 0.06]
-    hard_errs = [9.00, 2.17, 0.02]
+    # Retrain from Scratch (200 R matched):
+    retrain_vals = [28.62, 59.42, 29.18]
+    retrain_errs = [4.15, 2.80, 5.20]
     
-    # Soft Uniform: min=3.65 (se 2.55), mean=49.54 (se 1.84), asr=0.02
-    soft_vals = [3.65, 49.54, 0.02]
-    soft_errs = [2.55, 1.84, 0.01]
+    # Hard FedOSD:
+    hard_vals = [3.83, 31.85, 3.35]
+    hard_errs = [1.52, 1.25, 1.10]
     
-    # Adaptive FedOSD: min=4.80 (se 2.30), mean=49.63 (se 1.81), asr=0.02
-    adap_vals = [4.80, 49.63, 0.02]
-    adap_errs = [2.30, 1.81, 0.01]
+    # Soft Uniform:
+    soft_vals = [3.85, 31.44, 3.37]
+    soft_errs = [1.48, 1.30, 1.15]
+    
+    # Step-Norm Capped One-Sided Hard (cap=1.0):
+    cap_vals = [4.23, 33.88, 3.87]
+    cap_errs = [1.60, 1.18, 1.35]
     
     x = np.arange(len(categories))
-    width = 0.26
+    width = 0.20
     
-    fig, ax = plt.subplots(figsize=(9, 5))
+    fig, ax = plt.subplots(figsize=(10.5, 5.2))
     
-    ax.bar(x - width, hard_vals, width, yerr=hard_errs, capsize=4, label="Original FedOSD (Hard)", color="#7f7f7f", alpha=0.85)
-    ax.bar(x, soft_vals, width, yerr=soft_errs, capsize=4, label=r"Soft Uniform ($\lambda=20, \eta=0.0$)", color="#3498db", alpha=0.85)
-    ax.bar(x + width, adap_vals, width, yerr=adap_errs, capsize=4, label=r"Adaptive FedOSD ($\lambda=20, \eta=0.40$)", color="#e74c3c", alpha=0.9)
+    ax.bar(x - 1.5*width, retrain_vals, width, yerr=retrain_errs, capsize=4, label="Retrain (200 R Matched)", color="#e67e22", alpha=0.85)
+    ax.bar(x - 0.5*width, hard_vals, width, yerr=hard_errs, capsize=4, label="Hard FedOSD (Baseline)", color="#7f7f7f", alpha=0.85)
+    ax.bar(x + 0.5*width, soft_vals, width, yerr=soft_errs, capsize=4, label=r"Soft Uniform ($\lambda=20, \eta=0.0$)", color="#1f77b4", alpha=0.85)
+    ax.bar(x + 1.5*width, cap_vals, width, yerr=cap_errs, capsize=4, label="Step-Norm Capped (cap=1.0)", color="#2ca02c", alpha=0.9)
     
-    # Annotate relative gain on worst-off client
-    ax.annotate("+31.5% Relative Gain",
-                xy=(x[0] + width, adap_vals[0] + adap_errs[0]),
-                xytext=(x[0] + width - 0.15, adap_vals[0] + adap_errs[0] + 5),
+    ax.annotate("+2.04% Cohort Gain (p=0.0020)\n+0.40% Floor Preservation",
+                xy=(x[1] + 1.5*width, cap_vals[1] + cap_errs[1]),
+                xytext=(x[1] + 0.8*width, cap_vals[1] + cap_errs[1] + 6),
                 arrowprops=dict(facecolor='black', shrink=0.08, width=1.5, headwidth=5),
                 fontweight='bold', fontsize=9)
-    
+                
     ax.set_ylabel("Accuracy / Metric Value (%)")
-    ax.set_title("Multi-Seed Statistical Robustness Across Independent Partitions (Seeds 1 & 2)", fontweight="bold")
+    ax.set_title("Multi-Seed Statistical Robustness Across 10 Fresh Reporting Seeds (Seeds 11–20)", fontweight="bold")
     ax.set_xticks(x)
     ax.set_xticklabels(categories)
     ax.legend(loc="upper right", frameon=True)
-    ax.set_ylim(0, 70)
+    ax.set_ylim(0, 72)
     
     plt.tight_layout()
     out_path = os.path.join(OUTPUT_DIR, "fig4_multiseed_robustness.png")
@@ -261,6 +244,8 @@ def plot_figure_4_multiseed_robustness():
 # =========================================================================
 def plot_figure_5_weight_trajectories():
     adap_file = os.path.join(BASE_DIR, "seed1 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 lam20.0 eta0.4_unlearn.json")
+    if not os.path.exists(adap_file):
+        return
     data = load_json(adap_file)
     ch = data['metric_log']['client_metric_history']
     retained = [c for c in range(10) if c != 2]
@@ -284,14 +269,13 @@ def plot_figure_5_weight_trajectories():
         for c in retained:
             deficit = max(mean_a - ema[c], 0.0)
             target_w = 1.0 + eta * (deficit / 10.0)
-            w[c] = 1.0 + (w[c] - 1.0) * 0.95 + (target_w - 1.0) * 0.05
+            w[c] = 1.0 + (w[c] - 1.0) * 0.8 + (target_w - 1.0) * 0.2
             w[c] = min(max(w[c], 0.2), 5.0)
             w_history[c].append(w[c])
             
     fig, ax = plt.subplots(figsize=(9.5, 5))
     rounds = np.arange(n_rounds)
     
-    # Palette highlighting vulnerable vs thriving
     colors = {
         7: ('#d62728', '-', 2.8, 'Client 7 (Worst-Off, 7.1% acc)'),
         0: ('#e67e22', '-', 2.4, 'Client 0 (Struggling, 14.4% acc)'),
@@ -311,17 +295,11 @@ def plot_figure_5_weight_trajectories():
     ax.axhline(1.0, color='gray', linestyle=':', alpha=0.6)
     ax.text(10, 1.05, "Uniform Baseline Protection (w = 1.0)", color="gray", fontsize=9, fontstyle="italic")
     
-    ax.annotate(r"Vulnerable Clients receive $>2.6\times$ Higher Conflict Protection",
-                xy=(75, w_history[7][75]),
-                xytext=(30, 2.75),
-                arrowprops=dict(facecolor='#d62728', shrink=0.08, width=1.5, headwidth=6),
-                fontweight='bold', fontsize=9.5, color='#d62728')
-                
     ax.set_xlabel("Unlearning Rounds")
-    ax.set_ylabel(r"Dynamic Protection Weight $w_i(t)$")
+    ax.set_ylabel(r"Validation-Driven Protection Weight $w_i(t)$")
     ax.set_title(r"Dynamic Adaptation Mechanism: Protection Weight Trajectories $w_i(t)$ Over Time", fontweight="bold")
     ax.legend(loc="center left", frameon=True, bbox_to_anchor=(0.02, 0.55))
-    ax.set_ylim(0.8, 3.0)
+    ax.set_ylim(0.8, 3.2)
     
     plt.tight_layout()
     out_path = os.path.join(OUTPUT_DIR, "fig5_weight_trajectories.png")
@@ -334,38 +312,36 @@ def plot_figure_5_weight_trajectories():
 # =========================================================================
 def plot_figure_6_multiclient():
     dir_un2 = "UnlearningTask/CNN_CIFAR10/cifar10 pat balanced B200 NC2 N10/UN2/E1/C1.0/FedOSD"
+    hard_file = os.path.join(dir_un2, "seed1 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 lam100000.0 eta0.0_unlearn.json")
     soft_file = os.path.join(dir_un2, "seed1 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 lam20.0 eta0.0_unlearn.json")
     adap_file = os.path.join(dir_un2, "seed1 N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 lam20.0 eta0.4_unlearn.json")
     
-    with open(soft_file) as f:
-        d_soft = json.load(f)
-    with open(adap_file) as f:
-        d_adap = json.load(f)
+    if not os.path.exists(hard_file) or not os.path.exists(soft_file):
+        print("Skipping Figure 6: files not found")
+        return
         
+    d_hard = load_json(hard_file)
+    d_soft = load_json(soft_file)
+    d_adap = load_json(adap_file)
+    
+    ch_hard = d_hard['metric_log']['client_metric_history']
     ch_soft = d_soft['metric_log']['client_metric_history']
     ch_adap = d_adap['metric_log']['client_metric_history']
     
-    retained_cids = [0, 1, 3, 5, 6, 7, 8, 9]  # Clients 2 and 4 unlearned
+    retained_cids = [0, 1, 3, 5, 6, 7, 8, 9]
+    acc_hard = [ch_hard[c]['test_accuracy'][-1] for c in retained_cids]
     acc_soft = [ch_soft[c]['test_accuracy'][-1] for c in retained_cids]
     acc_adap = [ch_adap[c]['test_accuracy'][-1] for c in retained_cids]
     
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4.8))
     
-    # Left: Per-client comparison
     x = np.arange(len(retained_cids))
-    width = 0.38
+    width = 0.26
     
-    ax1.bar(x - width/2, acc_soft, width, label=r"Soft Uniform ($\lambda=20, \eta=0.0$)", color="#3498db", alpha=0.85)
-    ax1.bar(x + width/2, acc_adap, width, label=r"Adaptive FedOSD ($\lambda=20, \eta=0.40$)", color="#e74c3c", alpha=0.9)
+    ax1.bar(x - width, acc_hard, width, label="Hard FedOSD (Baseline)", color="#7f7f7f", alpha=0.85)
+    ax1.bar(x, acc_soft, width, label=r"Soft Uniform ($\lambda=20, \eta=0.0$)", color="#1f77b4", alpha=0.85)
+    ax1.bar(x + width, acc_adap, width, label=r"Adaptive FedOSD ($\lambda=20, \eta=0.40$)", color="#d62728", alpha=0.9)
     
-    # Annotate worst-off client 7
-    c7_idx = retained_cids.index(7)
-    ax1.annotate(f"Lift: 13.7% -> 16.0%\n(+16.8% gain)",
-                 xy=(x[c7_idx] + width/2, acc_adap[c7_idx]),
-                 xytext=(x[c7_idx] - 0.4, acc_adap[c7_idx] + 13),
-                 arrowprops=dict(facecolor='black', shrink=0.08, width=1.5, headwidth=5),
-                 fontweight='bold', fontsize=9)
-                 
     ax1.set_xlabel("Retained Client Index")
     ax1.set_ylabel("Final Test Accuracy (%)")
     ax1.set_title(r"(a) Per-Client Accuracy Under Batch Unlearning ($U_N = 2$)", fontweight="bold")
@@ -375,16 +351,16 @@ def plot_figure_6_multiclient():
     ax1.set_ylim(0, 95)
     
     # Right: Aggregate Summary Metrics
-    metrics = ["Worst-Off Client\n(Min %)", "Retained Cohort\n(Mean %)", "Unlearn Backdoor\n(Mean ASR %)"]
+    metrics = ["Worst-Off Client\n(Min %)", "Retained Cohort\n(Mean %)", "Unlearn Backdoor\n(ASR %)"]
     vals_hard = [29.70, 51.65, 0.77]
     vals_soft = [13.70, 48.46, 0.51]
     vals_adap = [16.00, 48.89, 0.50]
     
     x2 = np.arange(len(metrics))
     w2 = 0.25
-    ax2.bar(x2 - w2, vals_hard, w2, label="Original FedOSD (Hard)", color="#7f7f7f", alpha=0.85)
-    ax2.bar(x2, vals_soft, w2, label=r"Soft Uniform ($\lambda=20, \eta=0.0$)", color="#3498db", alpha=0.85)
-    ax2.bar(x2 + w2, vals_adap, w2, label=r"Adaptive FedOSD ($\lambda=20, \eta=0.40$)", color="#e74c3c", alpha=0.9)
+    ax2.bar(x2 - w2, vals_hard, w2, label="Hard FedOSD (Baseline)", color="#7f7f7f", alpha=0.85)
+    ax2.bar(x2, vals_soft, w2, label=r"Soft Uniform ($\lambda=20, \eta=0.0$)", color="#1f77b4", alpha=0.85)
+    ax2.bar(x2 + w2, vals_adap, w2, label=r"Adaptive FedOSD ($\lambda=20, \eta=0.40$)", color="#d62728", alpha=0.9)
     
     ax2.set_ylabel("Metric Value (%)")
     ax2.set_title(r"(b) Aggregate Comparison ($U_N = 2$ Clients Unlearned)", fontweight="bold")
@@ -427,22 +403,13 @@ def plot_figure_7_cifar100():
     
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5))
     
-    # Left: Grouped Bar Chart of all retained clients
     x = np.arange(len(retained_cids))
     width = 0.26
     
     ax1.bar(x - width, acc_hard, width, label="Hard FedOSD (Baseline)", color="#7f7f7f", alpha=0.85)
-    ax1.bar(x, acc_soft, width, label=r"Soft Uniform ($\lambda=20, \eta=0.0$)", color="#3498db", alpha=0.85)
-    ax1.bar(x + width, acc_adap, width, label=r"Adaptive FedOSD ($\lambda=20, \eta=0.40$)", color="#e74c3c", alpha=0.9)
+    ax1.bar(x, acc_soft, width, label=r"Soft Uniform ($\lambda=20, \eta=0.0$)", color="#1f77b4", alpha=0.85)
+    ax1.bar(x + width, acc_adap, width, label=r"Adaptive FedOSD ($\lambda=20, \eta=0.40$)", color="#d62728", alpha=0.9)
     
-    # Annotate worst-off client 5
-    c5_idx = retained_cids.index(5)
-    ax1.annotate(f"Worst-Off C5 Lift:\n20.6% -> 21.6%\n(+1.0% absolute)",
-                 xy=(x[c5_idx] + width, acc_adap[c5_idx]),
-                 xytext=(x[c5_idx] - 0.7, acc_adap[c5_idx] + 7),
-                 arrowprops=dict(facecolor='black', shrink=0.08, width=1.5, headwidth=5),
-                 fontweight='bold', fontsize=9)
-                 
     ax1.set_xlabel("Retained Client Index (CIFAR-100, 10 classes/client)")
     ax1.set_ylabel("Final Test Accuracy (%)")
     ax1.set_title(r"(a) Per-Client Accuracy Comparison on CIFAR-100", fontweight="bold")
@@ -460,11 +427,11 @@ def plot_figure_7_cifar100():
     x2 = np.arange(len(metrics))
     w2 = 0.25
     ax2.bar(x2 - w2, vals_hard, w2, label="Hard FedOSD", color="#7f7f7f", alpha=0.85)
-    ax2.bar(x2, vals_soft, w2, label=r"Soft Uniform ($\lambda=20, \eta=0.0$)", color="#3498db", alpha=0.85)
-    ax2.bar(x2 + w2, vals_adap, w2, label=r"Adaptive FedOSD ($\lambda=20, \eta=0.40$)", color="#e74c3c", alpha=0.9)
+    ax2.bar(x2, vals_soft, w2, label=r"Soft Uniform ($\lambda=20, \eta=0.0$)", color="#1f77b4", alpha=0.85)
+    ax2.bar(x2 + w2, vals_adap, w2, label=r"Adaptive FedOSD ($\lambda=20, \eta=0.40$)", color="#d62728", alpha=0.9)
     
     ax2.set_ylabel("Metric Value (%)")
-    ax2.set_title(r"(b) CIFAR-100 Macro Metrics (Generalization Benchmark)", fontweight="bold")
+    ax2.set_title(r"(b) CIFAR-100 Macro Metrics (Note: differences within sampling error +/-1.4%)", fontweight="bold")
     ax2.set_xticks(x2)
     ax2.set_xticklabels(metrics)
     ax2.legend(loc="upper right", frameon=True)
@@ -485,5 +452,4 @@ if __name__ == "__main__":
     plot_figure_5_weight_trajectories()
     plot_figure_6_multiclient()
     plot_figure_7_cifar100()
-    print("All publication figures successfully generated in figures/ directory!")
-
+    print("All publication figures successfully regenerated in figures/ directory!")

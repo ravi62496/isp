@@ -14,7 +14,10 @@ class UnlearningTask(fp.BasicTask):
     def __init__(self, name='UnlearningTask'):
         super().__init__(name)
         
-        self.algorithm.save_folder = self.name + '/' + self.params['module'] + '/' + self.data_loader.nickname + '/UN' + str(self.params['unlearn_cn']) + '/E' + str(self.params['E']) + '/C' + str(self.params['C']) + '/' + self.params['algorithm'] + '/'
+        if self.params.get('results_dir'):
+            self.algorithm.save_folder = self.params['results_dir'].rstrip('/\\') + '/'
+        else:
+            self.algorithm.save_folder = self.name + '/' + self.params['module'] + '/' + self.data_loader.nickname + '/UN' + str(self.params['unlearn_cn']) + '/E' + str(self.params['E']) + '/C' + str(self.params['C']) + '/' + self.params['algorithm'] + '/'
         unlearn_pretrain_flag = self.params['unlearn_pretrain']
         retrain_flag = eval(str(self.params.get('retrain', 'False')))
         
@@ -24,7 +27,15 @@ class UnlearningTask(fp.BasicTask):
         if retrain_flag:
             # Retrain from scratch baseline: do not load pretrained weights
             print("[RETRAIN] Running retrain from scratch baseline on retained clients only.")
-            self.algorithm.save_name = f"seed{self.params['seed']} retrain_from_scratch " + self.algorithm.save_name
+            init_seed_val = self.params.get('model_init_seed', -1)
+            if init_seed_val > 0:
+                print(f"[RETRAIN] Re-initializing model weights with model_init_seed={init_seed_val}")
+                fp.setup_seed(seed=init_seed_val)
+                self.algorithm.module.generate_model(self.data_loader.input_data_shape, self.data_loader.target_class_num)
+                fp.setup_seed(seed=self.params['seed'])
+                self.algorithm.save_name = f"seed{self.params['seed']} retrain_from_scratch init{init_seed_val} " + self.algorithm.save_name
+            else:
+                self.algorithm.save_name = f"seed{self.params['seed']} retrain_from_scratch " + self.algorithm.save_name
             if self.params.get('R', 200) != 200:
                 self.algorithm.save_name += f" R{self.params['R']}"
             self.algorithm.init_model_params = self.algorithm.module.span_model_params_to_vec()
@@ -408,6 +419,7 @@ class UnlearningTask(fp.BasicTask):
         parser.add_argument('--interp_alpha', help='EMA smoothing alpha for interpolation score', type=float, default=0.3)
         parser.add_argument('--cap_hard_ratio', help='Ratio of hard step norm to cap projection step (E3)', type=float, default=-1.0)
         parser.add_argument('--step_scale', help='Scale factor for unlearning update step d in (0, 1]', type=float, default=1.0)
+        parser.add_argument('--results_dir', help='Custom output directory for result files', type=str, default='')
 
         try:
             if return_parser:

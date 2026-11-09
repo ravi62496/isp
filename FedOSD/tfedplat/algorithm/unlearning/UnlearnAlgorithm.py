@@ -1,4 +1,3 @@
-
 import tfedplat as fp
 import numpy as np
 import os
@@ -75,6 +74,12 @@ class UnlearnAlgorithm(fp.Algorithm):
         def save_model_log():
             self.recovery_stage = True
             
+            if self.init_model_params is not None:
+                current_params = self.module.span_model_params_to_vec()
+                disp = float(torch.norm(current_params - self.init_model_params).item())
+                self.algorithm_log['unlearn_displacement'] = disp
+                self.metric_log['unlearn_displacement'] = disp
+            
             if self.r_lr > 0:
                 self.initial_lr = self.r_lr
             
@@ -91,7 +96,7 @@ class UnlearnAlgorithm(fp.Algorithm):
                 self.save_log(save_name=self.save_name + '_unlearn')
                 print('Saved log in the unlearning stage.')
 
-        if self.current_comm_round > self.max_unlearn_round:  
+        if not self.recovery_stage and self.current_comm_round >= self.max_unlearn_round:  
             save_model_log()
         else:
             unlearned_client_local_backdoor_acc_list = []
@@ -111,7 +116,6 @@ class UnlearnAlgorithm(fp.Algorithm):
         self.algorithm_log['distance_to_init_model'].append(round(float(ga_norm), 4))
 
     def terminated(self):
-        
         terminated_flag = super().terminated()
         
         if not self.recovery_stage:

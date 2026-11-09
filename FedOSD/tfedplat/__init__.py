@@ -27,6 +27,7 @@ from tfedplat.algorithm.FedAvg.FedAvg import FedAvg
 # unlearning
 from tfedplat.algorithm.unlearning.UnlearnAlgorithm import UnlearnAlgorithm
 from tfedplat.algorithm.unlearning.FedOSD import FedOSD
+from tfedplat.algorithm.unlearning.FedAvg_GA import FedAvg_GA
 
 
 # import backdoors
@@ -51,9 +52,10 @@ pool_folder_path = os.path.dirname(os.path.abspath(__file__)) + '/pool/'
 if not os.path.exists(pool_folder_path):
     os.makedirs(pool_folder_path)
 
-# get the path of the model
+# get the path of the model folder
 model_folder_path = os.path.dirname(os.path.abspath(__file__)) + '/model/'
+if not os.path.exists(model_folder_path):
+    os.makedirs(model_folder_path)
 
-# import Task
 from tfedplat.Task import BasicTask
 from tfedplat.task.unlearning.UnlearningTask import UnlearningTask
