@@ -246,7 +246,7 @@ Source file: `eval_summary_R2_seeds_21_22_23_24_25_26_27_28_29_30.json`
 - **Recovery**: recovery is plain FedAvg.
 - **Pretraining rounds**: 100 rounds ($R=100$) were run and evaluated in code/README; "paper used 2000" is UNVERIFIED.
 - **Pre-registration freeze**: rules frozen in git tag freeze-v5.1.
-- **Amendment**: one amendment (`AMENDMENT_1.md`) changed only the config_hash column and no metrics were viewed first.
+- **Amendment**: one amendment (`AMENDMENT_1.md`) changed only the config_hash column the evaluator aborted before reading any metric, and I cannot confirm whether I saw any metrics before the amendment.
 - **Table script**: `make_readme_tables.py` was edited after the run to ignore `*_exploratory.csv`, changing no numbers.
 - **Exploratory comparisons**: exploratory comparisons (A3 vs A4, A3 vs A1, A1 vs A2) are not strength-matched and not confirmatory.
 

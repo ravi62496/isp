@@ -1,4 +1,4 @@
-# AMENDMENT 1: provenance config-hash check (no confirmatory metric viewed)
+# AMENDMENT 1: provenance config-hash check (change did not use any metric)
 
 Date and time written: 2026-11-10 18:25:00 +05:30
 Pre-registration in effect: tag freeze-v5.1 (commit 7df1ab9). Pinned files are UNCHANGED:
