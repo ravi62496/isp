@@ -19,7 +19,7 @@ $$d_{\text{hard}} = g_u - A^T (A A^T)^{-1} A g_u$$
 In non-IID federated learning, unlearning affects retained clients heterogeneously:
 1. **Class-Overlap Vulnerability**: When a retained client shares classes with the unlearned client, unlearning gradient directions conflict directly with that client's local objectives.
 2. **Orthogonal Complement vs. One-Sided Relaxation**: Standard Hard FedOSD forces $g_i^T d = 0$ symmetrically for all retained clients. One-sided FedOSD relaxes this constraint to $\hat{g}_i^T d \ge 0$. While theoretically intended to permit descent directions aligned with retained client gradients, empirical evaluations show that relaxing orthogonality does *not* consistently protect retained or worst-off clients (on multi-seed audits at round 100, the worst-off floor drops relative to hard projection).
-3. **Gradient Rescaling vs. Pure Projection**: In the legacy codebase, unconstrained descent directions were subjected to norm rescaling: $d = \frac{d}{\|d_{\text{raw}}\|} \cdot \|g_u\|$, dilating descent steps up to the unlearned client's local gradient norm $\|g_u\|$ (at Round 1, $\|g_u\| \approx 27.84$ vs $\|d_{\text{raw}}\| \approx 20.81$, a $+33.8\%$ step enlargement). Legacy Hard FedOSD was similarly rescaled to $\|g_u\|$. This dilation causes excessive parameter displacement and collateral degradation on retained clients.
+3. **Gradient Rescaling vs. Pure Projection**: In the legacy codebase, unconstrained descent directions were subjected to norm rescaling: $d = \frac{d}{\|d_{\text{raw}}\|} \cdot \|g_u\|$, dilating descent steps up to the unlearned client's local gradient norm $\|g_u\|$ (at Round 1, $\|g_u\| \approx 27.84$ vs $\|d_{\text{raw}}\| \approx 20.81$, a $+33.8\%$ step enlargement). Legacy Hard FedOSD was similarly rescaled to $\|g_u\|$. This dilation was associated with excessive parameter displacement and collateral degradation (exploratory evidence) on retained clients.
 
 ### Method Under Test: One-Sided, Unscaled Projection (cap 1.0)
 To investigate the one-sided relaxation ($\hat{g}_i^T d \ge 0$) without artificial $\|g_u\|$ rescaling, **One-Sided Unscaled FedOSD (cap 1.0)** solves the one-sided projection via dual Non-Negative Least Squares (NNLS) and caps the update vector norm at $\|d_{\text{hard}}\|$:
@@ -93,6 +93,8 @@ To verify that effects are evaluated at matched displacement rather than differi
 | **Worst-Off Client Floor** | **+0.38%** | [+0.06%, +0.62%] | 3/3 positive |
 | **Max Collateral Drop** | **-0.21%** | [-0.63%, +0.17%] | 2/3 negative |
 
+*Note: Table 3.2 is exploratory ($n=3$, round 200, tuning seeds 101–103). The pre-registered confirmatory round-100 result on fresh seeds 21–30 ($n=10$) is reported in the new [Main result](#main-result) section below and points the other way on the worst-off floor (-5.47 points).*
+
 ---
 
 ## 4. Empirical Evaluation Protocol & Benchmarks (Historical Regime R1, Exploratory Seeds 11–20)
@@ -136,17 +138,17 @@ All p-values corrected within predefined family scopes:
 ```text
 Comparison / Test Family                  | Metric                | Paired Diff | 95% Bootstrap CI   | Raw p   | Holm p  | Signs
 --------------------------------------------------------------------------------------------------------------------------------------
-[Primary Family 1: Capped vs Hard (m=3 primary metrics)]
+[Exploratory Family 1: Capped vs Hard (m=3 primary metrics)]
 One-sided, unscaled (cap 1.0) vs Hard FedOSD           | Retained Cohort Mean  | +2.04%      | [+1.81%, +2.25%]   | 0.0020  | 0.0060  | 10/10 (+)
 One-sided, unscaled (cap 1.0) vs Hard FedOSD           | Max Collateral Drop   | -3.55%      | [-5.58%, -1.48%]   | 0.0137  | 0.0274  | 9/10 (-)
 One-sided, unscaled (cap 1.0) vs Hard FedOSD           | Worst-Off Floor (Min) | +0.40%      | [-0.30%, +1.37%]   | 0.6523  | 0.6523  | 6/10 (+)
 (Secondary diagnostic)                    | Backdoor ASR          | +0.81%      | [+0.50%, +1.18%]   | 0.0020  | --      | 10/10 (+)
 --------------------------------------------------------------------------------------------------------------------------------------
-[Pairwise Family 2: Capped vs One-sided rescaled to ||g_u|| (m=2 metrics)]
+[Exploratory Family 2: Capped vs One-sided rescaled to ||g_u|| (m=2 metrics)]
 One-sided, unscaled (cap 1.0) vs Unconstrained         | Worst-Off Floor (Min) | +1.51%      | [+0.62%, +2.45%]   | 0.0039  | 0.0078  | 9/10 (+)
 One-sided, unscaled (cap 1.0) vs Unconstrained         | Retained Cohort Mean  | +0.81%      | [+0.35%, +1.28%]   | 0.0039  | 0.0078  | 9/10 (+)
 --------------------------------------------------------------------------------------------------------------------------------------
-[Pairwise Family 3: Unconstrained vs Hard FedOSD (m=2 metrics)]
+[Exploratory Family 3: Unconstrained vs Hard FedOSD (m=2 metrics)]
 One-sided rescaled to ||g_u|| vs Hard FedOSD    | Worst-Off Floor (Min) | -1.12%      | [-1.80%, -0.53%]   | 0.0039  | 0.0040  | 1/10 (+)
 One-sided rescaled to ||g_u|| vs Hard FedOSD    | Retained Cohort Mean  | +1.23%      | [+0.89%, +1.59%]   | 0.0020  | 0.0040  | 10/10 (+)
 ```
@@ -177,6 +179,85 @@ Below are the screening evaluations conducted on tuning seed 101 under primary r
 
 ---
 
+## Main result
+
+Pre-registered outcome: C (trade-off).
+
+At round 100, A3 (one-sided, capped) has higher retained mean accuracy than A2 (hard projection, step scale 0.54, strength-matched) by +1.15 points, but a lower worst-off floor (-5.47) and a larger max collateral drop (-3.37). At round 200 the mean difference is +0.31 (labeled Equivalent). The method does not protect the worst-off client.
+
+### Claim Table
+
+| Claim | Supporting table row | Evaluator label |
+|---|---|---|
+| mean +1.15 at R100 | F1_Confirmatory_A3_vs_A2_Rd100: Retained Cohort Mean Acc | Superior |
+| floor -5.47 | F1_Confirmatory_A3_vs_A2_Rd100: Worst-Off Floor (Min Acc) | Inferior |
+| max drop -3.37 | F1_Confirmatory_A3_vs_A2_Rd100: Max Collateral Drop | Inferior |
+| mean equivalent at R200 | F2_Secondary_A3_vs_A2_Rd200: Retained Cohort Mean Acc | Equivalent |
+
+## Strength matching and sample size
+
+| Family | n | Strength matched | Displacement ratio | abs ASR diff (pt) |
+|---|---|---|---|---|
+| F1_Confirmatory_A3_vs_A2_Rd100 | 10 | True | 1.0119 | 0.09 |
+| F2_Secondary_A3_vs_A2_Rd200 | 10 | True | 1.0114 | 0.43 |
+| Exploratory_A3_vs_A4_Rd100 | 10 | False | 0.7075 | 0.64 |
+| Exploratory_A3_vs_A1_Rd100 | 10 | False | 0.7327 | 0.52 |
+| Sensitivity_Control_A1_vs_A2_Rd100 | 10 | False | 1.3810 | 0.61 |
+
+## F1 (confirmatory): A3 vs A2 at round 100
+
+| Metric | Method (A3) | Comparator (A2) | Diff (95% CI, t) | p (Holm) | Label |
+|---|---|---|---|---|---|
+| Retained Cohort Mean Acc | 47.89 | 46.75 | +1.15 [+0.72, +1.58] | 0.0004 | Superior |
+| Worst-Off Floor (Min Acc) | 19.93 | 25.40 | -5.47 [-7.10, -3.84] | 0.0001 | Inferior |
+| Max Collateral Drop | 14.00 | 10.63 | -3.37 [-6.19, -0.54] | 0.0245 | Inferior |
+
+Source file: `table_F1_Confirmatory_A3_vs_A2_Rd100.csv`
+
+## F2 (secondary, pre-registered): A3 vs A2 at round 200
+
+| Metric | Method (A3) | Comparator (A2) | Diff (95% CI, t) | p (Holm) | Label |
+|---|---|---|---|---|---|
+| Retained Cohort Mean Acc | 52.39 | 52.08 | +0.31 [+0.17, +0.45] | 0.0015 | Equivalent |
+| Worst-Off Floor (Min Acc) | 27.50 | 26.50 | +1.00 [+0.62, +1.38] | 0.0006 | Better but negligible |
+| Max Collateral Drop | 5.05 | 5.57 | +0.52 [+0.09, +0.95] | 0.0236 | Equivalent |
+
+Source file: `table_F2_Secondary_A3_vs_A2_Rd200.csv`
+
+## Sensitivity control (exploratory): A1 vs A2 at round 100
+
+| Metric | Method (A1) | Comparator (A2) | Diff (95% CI, t) | p (Holm) | Label |
+|---|---|---|---|---|---|
+| Retained Cohort Mean Acc | 45.33 | 46.75 | -1.41 [-1.70, -1.13] | 0.0000 | Inferior |
+| Worst-Off Floor (Min Acc) | 23.82 | 25.40 | -1.58 [-2.42, -0.75] | 0.0020 | Worse but negligible |
+| Max Collateral Drop | 12.88 | 10.63 | -2.25 [-3.21, -1.29] | 0.0010 | Inferior |
+
+Source file: `table_Sensitivity_Control_A1_vs_A2_Rd100.csv`
+
+## Pre-registered outcome
+
+**Outcome C** - Outcome C: Inferior metric present in F1; fewer than 2 Superior in F1 and F2 not fully Equivalent.
+
+Source file: `eval_summary_R2_seeds_21_22_23_24_25_26_27_28_29_30.json`
+
+### Deviations and disclosures
+
+- **Baseline A2**: baseline A2 = hard projection with step_scale 0.54 chosen to match A3 displacement (in `tfedplat/algorithm/unlearning/FedOSD.py` and the A2 command line in `AMENDMENT_1.md`, A2 falls through to the legacy rescaling branch that rescales to the unlearning gradient norm $\|g_u\|$, scaled by step_scale 0.54).
+- **Recovery**: recovery is plain FedAvg.
+- **Pretraining rounds**: 100 rounds ($R=100$) were run and evaluated in code/README; "paper used 2000" is UNVERIFIED.
+- **Pre-registration freeze**: rules frozen in git tag freeze-v5.1.
+- **Amendment**: one amendment (`AMENDMENT_1.md`) changed only the config_hash column and no metrics were viewed first.
+- **Table script**: `make_readme_tables.py` was edited after the run to ignore `*_exploratory.csv`, changing no numbers.
+- **Exploratory comparisons**: exploratory comparisons (A3 vs A4, A3 vs A1, A1 vs A2) are not strength-matched and not confirmatory.
+
+### Not tested
+
+- Other datasets/model types.
+- The paper's post-training projection.
+- Multiple hardware setups.
+
+---
+
 ## 6. Limitations
 
 1. **Training Regime Sensitivity**: Pretraining learning rate and round count significantly influence unlearning dynamics; results in R1 reflect an under-trained pretrain checkpoint relative to R2.
@@ -192,6 +273,9 @@ Below are the screening evaluations conducted on tuning seed 101 under primary r
 ```bash
 # Evaluate Stage 4 confirmatory or dry-run protocol:
 python evaluate_confirmation.py --regime R2 --seeds 101 102 103 104 105
+
+# Generate README confirmation tables:
+python make_readme_tables.py results_confirm README_confirmation_tables.md
 ```
 
 ---
