@@ -1,0 +1,56 @@
+{
+  "F1_Confirmatory_A3_vs_A2_Rd100": {
+    "n": 10,
+    "strength_matched": true,
+    "disp_ratio": 1.0118822111201486,
+    "labels": {
+      "mean": "Superior",
+      "floor": "Inferior",
+      "drop": "Inferior"
+    }
+  },
+  "F2_Secondary_A3_vs_A2_Rd200": {
+    "n": 10,
+    "strength_matched": true,
+    "disp_ratio": 1.0113943028442434,
+    "labels": {
+      "mean": "Equivalent",
+      "floor": "Better but negligible",
+      "drop": "Equivalent"
+    }
+  },
+  "Exploratory_A3_vs_A4_Rd100": {
+    "n": 10,
+    "strength_matched": false,
+    "disp_ratio": 0.7075042894533352,
+    "labels": {
+      "mean": "not comparable",
+      "floor": "not comparable",
+      "drop": "not comparable"
+    }
+  },
+  "Exploratory_A3_vs_A1_Rd100": {
+    "n": 10,
+    "strength_matched": false,
+    "disp_ratio": 0.7326911686750439,
+    "labels": {
+      "mean": "not comparable",
+      "floor": "not comparable",
+      "drop": "not comparable"
+    }
+  },
+  "Sensitivity_Control_A1_vs_A2_Rd100": {
+    "n": 10,
+    "strength_matched": false,
+    "disp_ratio": 1.3810487342802606,
+    "labels": {
+      "mean": "Inferior",
+      "floor": "Worse but negligible",
+      "drop": "Inferior"
+    }
+  },
+  "confirmatory_outcome": {
+    "outcome": "Outcome C",
+    "description": "Outcome C: Inferior metric present in F1; fewer than 2 Superior in F1 and F2 not fully Equivalent."
+  }
+}
