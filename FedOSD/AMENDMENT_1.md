@@ -46,13 +46,17 @@ SHA-256 of both manifests:
 - `RUN_MANIFEST_CONFIRM.csv`:         `a163c302d84f20eb0c796383db54da80ff428c7d03c15b74d2f2b51ce282ab7a`
 - `RUN_MANIFEST_CONFIRM_amended.csv`: `86b2e879c7c8920a17398dc55ec8abff98dbc9689699f8e207ca7dab1f858adf`
 
+The script I ran (amend_manifest_config_hash.py) had SHA-256: ff16da3b0f5c67ee7b5beabf4e979836f5e04bf9fd6349e242c68c552e386827
+
 ## 5. What was viewed before this amendment (fill in truthfully)
-- stage4_eval.txt contains only the header and the abort message.
-- The final lines of the console log for seed 30, arm A4, were displayed and pasted for
-  diagnostics. A4 is an exploratory arm and is not part of F1 or F2.
-- The run printed per-round metrics to the console. The agent did not watch the run live,
-  did not open stage4_log.txt, and did not view metrics for any F1 or F2 arms or seeds.
-- Legacy result files for tuning seeds were evaluated before the run, as documented.
+Section 5 completed 2026-11-11
+
+- I opened stage4_eval.txt. It contained only the header and the abort message ('Multiple config hashes detected for arm A1'). It contained no metrics.
+- I am not sure whether I or an AI assistant saw log lines for seed 30 arm A4.
+- I watched the run live.
+- I did not open stage4_log.txt.
+- I don't remember exactly whether I saw any metrics for F1/F2 arms or seeds 21-30 before the abort.
+- Results for earlier exploratory and tuning seeds (11–20, 101–105) were evaluated before the run and are documented in README.md. They are separate from the confirmatory seeds 21–30.
 
 ## 6. Consequence
 The evaluator is run unmodified on the amended manifest. This amendment is reported in the
