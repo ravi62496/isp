@@ -104,7 +104,7 @@ class UnlearningTask(fp.BasicTask):
         setattr(client, "local_backdoor_test_data", copy.deepcopy(client.local_training_data))
         setattr(client, "local_backdoor_test_number", client.local_training_number)
         
-        backdoor = fp.FigRandBackdoor(dataloader=self.algorithm.data_loader, save_folder=self.algorithm.pretrained_model_folder + 'backdoors/', save_name=f'client_{client.id}_backdoor')
+        backdoor = fp.FigRandBackdoor(dataloader=self.algorithm.data_loader, save_folder=self.algorithm.pretrained_model_folder + 'backdoors/', save_name=f'seed{self.params["seed"]}_client_{client.id}_backdoor')
         backdoor.add_backdoor(client.local_training_data, attack_portion=attack_portion)
         backdoor.add_backdoor(client.local_backdoor_test_data, attack_portion=attack_portion)
         setattr(client, "backdoor_setting", backdoor)  

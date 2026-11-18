@@ -91,7 +91,7 @@ def check_backdoor_clients():
     """Print which clients carry a backdoor per split. With pools prebuilt, each seed must map to
     exactly one client; a second file appearing for the same seed means a client mismatch."""
     for split, (_, nick) in SPLITS.items():
-        files = glob.glob(os.path.join('UnlearningTask', 'CNN_CIFAR10', nick, 'UN1', 'E1', 'backdoors', 'client_*_backdoor.npy'))
+        files = glob.glob(os.path.join('UnlearningTask', 'CNN_CIFAR10', nick, 'UN1', 'E1', 'backdoors', 'seed*_client_*_backdoor.npy'))
         print(f'[check] {split}: backdoor files {sorted(os.path.basename(f) for f in files)}', flush=True)
 
 
