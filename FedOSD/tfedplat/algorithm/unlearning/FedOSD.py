@@ -198,10 +198,10 @@ class FedOSD(fp.UnlearnAlgorithm):
                 cid = client.id
                 h = self.metric_log['client_metric_history'][cid]
                 val_hist = h.get('val_accuracy', [])
-                if len(val_hist) > 0:
-                    self.pre_acc[cid] = val_hist[0]
-                elif len(h.get('test_accuracy', [])) > 0:
-                    self.pre_acc[cid] = h['test_accuracy'][0]
+                if len(val_hist) == 0:
+                    # Never fall back to test accuracy: that leaks the test split into the weights.
+                    raise RuntimeError(f'No val_accuracy for client {cid}; refusing test-set fallback.')
+                self.pre_acc[cid] = val_hist[0]
 
         # Update EMA validation accuracy per client (strictly on held-out validation split)
         beta = 0.8
@@ -212,9 +212,7 @@ class FedOSD(fp.UnlearnAlgorithm):
             h = self.metric_log['client_metric_history'][cid]
             val_history = h.get('val_accuracy', [])
             if len(val_history) == 0:
-                val_history = h.get('test_accuracy', [])
-            if len(val_history) == 0:
-                continue
+                raise RuntimeError(f'No val_accuracy for client {cid}; refusing test-set fallback.')
             current_acc = val_history[-1]
             if cid not in self.ema_acc:
                 self.ema_acc[cid] = current_acc

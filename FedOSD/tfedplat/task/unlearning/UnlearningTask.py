@@ -257,17 +257,17 @@ class UnlearningTask(fp.BasicTask):
                         out = client.test_module.model(batch_x)
                         clean_correct += correct_metric.calc(out, batch_y)
                         preds = torch.argmax(out, dim=1)
-                        # Backdoor target class shift is +5 % 10
-                        target_class = (batch_y + 5) % 10
-                        target_mask = (batch_y == target_class)
-                        if target_mask.sum() > 0:
-                            target_total += target_mask.sum().item()
-                            target_correct += (preds[target_mask] == batch_y[target_mask]).sum().item()
+                        # Backdoor relabels y -> (y + 5) % 10. On CLEAN (untriggered) inputs, count how
+                        # often the model still predicts the backdoor label (trigger-free leakage).
+                        # (The old target-class mask was always empty: y == (y+5)%10 is never true.)
+                        backdoor_label = (batch_y + 5) % 10
+                        target_total += batch_y.shape[0]
+                        target_correct += (preds == backdoor_label).sum().item()
 
                     f_acc = 100 * clean_correct / max(1, client.clean_test_number)
                     self.metric_history['clean_test_accuracy'].append(f_acc)
                     self.metric_history['forget_acc'].append(f_acc)
-                    recall = (100 * target_correct / target_total) if target_total > 0 else f_acc
+                    recall = (100 * target_correct / target_total) if target_total > 0 else float('nan')
                     self.metric_history['target_class_recall'].append(recall)
 
                     # Compute membership inference attack AUC
@@ -287,8 +287,7 @@ class UnlearningTask(fp.BasicTask):
                 val_accs = metric_history.get('val_accuracy', [])
                 if len(val_accs) > 0:
                     alg.metric_log['pre_acc'][str(i)] = val_accs[0]
-                elif len(metric_history['test_accuracy']) > 0:
-                    alg.metric_log['pre_acc'][str(i)] = metric_history['test_accuracy'][0]
+                # No test_accuracy fallback: pre_acc must come from the validation split only.
 
         # Log peak GPU memory allocation
         if torch.cuda.is_available():
@@ -371,7 +370,7 @@ class UnlearningTask(fp.BasicTask):
         if len(unlearned_clean_acc_list) > 0:
             out_log += f'Forget-Set Clean Acc (forget_acc): {np.mean(unlearned_clean_acc_list):.2f}%\n'
         if len(target_recalls) > 0:
-            out_log += f'Target-Class Clean Recall (target_class_recall): {np.mean(target_recalls):.2f}%\n'
+            out_log += f'Clean->Backdoor-Label Rate (target_class_recall, lower is better): {np.mean(target_recalls):.2f}%\n'
         if len(mia_aucs) > 0:
             out_log += f'MIA ROC AUC (mia_auc): {np.mean(mia_aucs):.4f}\n'
         if len(unlearned_client_local_backdoor_acc_list) > 0:

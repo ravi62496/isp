@@ -37,6 +37,7 @@ from tfedplat.dataloaders.backdoors.FigRandBackdoor import FigRandBackdoor
 # import dataloader
 from tfedplat.dataloaders.separate_data import separate_data, create_data_pool
 from tfedplat.dataloaders.DataLoader_cifar10_pat import DataLoader_cifar10_pat
+from tfedplat.dataloaders.DataLoader_cifar10_dir import DataLoader_cifar10_dir
 from tfedplat.dataloaders.DataLoader_mnist_pat import DataLoader_mnist_pat
 from tfedplat.dataloaders.DataLoader_fashion_pat import DataLoader_fashion_pat
 from tfedplat.dataloaders.DataLoader_cifar100_pat import DataLoader_cifar100_pat
