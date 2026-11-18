@@ -66,6 +66,35 @@ def build(seeds):
     return [('1a', p1a), ('1b', p1b), ('2', p2)]
 
 
+def build_pools():
+    """Phase 0: create every cached data pool BEFORE any training run.
+    The forget client is drawn from the global np.random state (UnlearningTask.py:58). A run that
+    *creates* a pool consumes random draws first and so picks a different client than runs that
+    *read* the cache -> pretrain backdoor client != unlearned client. Building pools here means
+    every training run reads the cache and picks the same client for a given seed."""
+    import random
+    import numpy as np
+    import tfedplat as fp
+    for split in SPLITS:
+        np.random.seed(0)
+        random.seed(0)
+        params = {'N': 10, 'NC': 2, 'B': 200, 'balance': 'True'}
+        if split == 'pat':
+            fp.DataLoader_cifar10_pat(params=params, input_require_shape=[3, -1, -1])
+        else:
+            params['Diralpha'] = float(split[3:])
+            fp.DataLoader_cifar10_dir(params=params, input_require_shape=[3, -1, -1])
+        print(f'[pool] {split} ready', flush=True)
+
+
+def check_backdoor_clients():
+    """Print which clients carry a backdoor per split. With pools prebuilt, each seed must map to
+    exactly one client; a second file appearing for the same seed means a client mismatch."""
+    for split, (_, nick) in SPLITS.items():
+        files = glob.glob(os.path.join('UnlearningTask', 'CNN_CIFAR10', nick, 'UN1', 'E1', 'backdoors', 'client_*_backdoor.npy'))
+        print(f'[check] {split}: backdoor files {sorted(os.path.basename(f) for f in files)}', flush=True)
+
+
 def run_phase(jobs, gpus, per_gpu):
     slots = Queue()
     for g in gpus:
@@ -111,6 +140,9 @@ def main():
     if bad:
         sys.exit(f'Refusing: seeds {sorted(bad)} are reserved (confirmatory/final). Tuning seeds only.')
     os.makedirs(LOG_DIR, exist_ok=True)
+    if not a.dry_run:
+        print('\n=== phase 0: build data pools ===', flush=True)
+        build_pools()
     phases = build(a.seeds)
     for ph, jobs in phases:
         print(f'\n=== phase {ph}: {len(jobs)} jobs ===', flush=True)
@@ -121,6 +153,8 @@ def main():
         failed = run_phase(jobs, a.gpus, a.per_gpu)
         if failed:
             sys.exit(f'Phase {ph} had failures: {failed}. Fix and re-run (finished jobs are skipped).')
+        if ph == '1b':
+            check_backdoor_clients()
     print('\nAll phases complete.', flush=True)
 
 
