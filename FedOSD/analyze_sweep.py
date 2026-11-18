@@ -106,11 +106,13 @@ def main():
     g01 = {eta: gain('dir0.1', eta) for eta in (0.4, 1.0)}
     eta_star = max(g01, key=lambda k: g01[k])
     G = {sp: gain(sp, eta_star) for sp in NICK}
+    complete = not errors and all(np.isfinite(v) for v in list(G.values()) + list(g01.values()))
     adaptive = G['dir0.1'] >= ADAPT_MIN_GAIN and G['dir0.1'] > G['pat']
     print(f'\neta* (chosen on dir0.1) = {eta_star};  G = floor(eta*) - floor(eta=0):  '
           + ', '.join(f'{k}={v:+.2f} pp' for k, v in G.items()))
-    print(f'Rule: G(dir0.1) >= {ADAPT_MIN_GAIN} AND G(dir0.1) > G(pat)  ->  '
-          f'{"ADAPTIVE is the main method" if adaptive else "UNIFORM soft FedOSD (eta=0) is the main method"}')
+    verdict = ('UNDECIDED: missing runs or failed sanity checks (see PROBLEMS)' if not complete else
+               'ADAPTIVE is the main method' if adaptive else 'UNIFORM soft FedOSD (eta=0) is the main method')
+    print(f'Rule: G(dir0.1) >= {ADAPT_MIN_GAIN} AND G(dir0.1) > G(pat)  ->  {verdict}')
 
     print('\n=== Lambda selection (pat, eta=0), VAL mean subject to forget ASR <= 5% on ALL seeds ===')
     lam_rows = {}
@@ -130,7 +132,8 @@ def main():
         print('\n!!! PROBLEMS (resolve before trusting the decision):')
         for e in errors:
             print('  -', e)
-    out.update({'eta_star': eta_star, 'G': G, 'adaptive_main': bool(adaptive), 'lambda_star': lam_star,
+    out.update({'eta_star': eta_star, 'G': G, 'verdict': verdict,
+                'adaptive_main': bool(adaptive) if complete else None, 'lambda_star': lam_star,
                 'lambda_rows': {str(k): v for k, v in lam_rows.items()}, 'problems': errors,
                 'rule': 'PREREG_SOFT_HETEROGENEITY.md (+ Amendment A); validation split only'})
     os.makedirs('results_soft', exist_ok=True)
