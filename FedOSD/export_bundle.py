@@ -38,7 +38,7 @@ MODEL_FILES = {  # name -> glob pattern relative to <models_root>/CNN_CIFAR10/<n
     'fedosd_hard': 'C1.0/FedOSD/' + FEDOSD + 'proj_hard lam100000.0 eta0.0 rlr0.0001_unlearn.pth',
     'posttrain_proj': 'C1.0/FedOSD/' + FEDOSD + 'proj_hard lam100000.0 eta0.0 rlr0.0001.pth',
     'posttrain_plain': 'C1.0/FedOSD/' + FEDOSD + 'proj_hard lam100000.0 eta0.0 rec_plain rlr0.0001.pth',
-    'soft_fedosd': 'C1.0/FedOSD/' + FEDOSD + 'proj_two_sided wm_uniform lam{lam} eta0.0 rlr0.0001_unlearn.pth',
+    'soft_fedosd': 'C1.0/FedOSD/' + FEDOSD + 'proj_two_sided wm_{wm} lam{lam} eta{eta} rlr0.0001_unlearn.pth',
     'plain_ga': 'C1.0/FedAvg_GA/seed{s} *_unlearn.pth',
 }
 
@@ -97,6 +97,7 @@ def main():
     ap.add_argument('--gate', action='store_true', help='only check that the original model learned the backdoor')
     ap.add_argument('--gate_min_asr', type=float, default=60.0)  # Amendment B (was 90)
     ap.add_argument('--soft_lam', default='20.0')
+    ap.add_argument('--soft_eta', default='0.0', help='0.0 = uniform soft FedOSD; >0 = adaptive (wm_deficit)')
     ap.add_argument('--out', default=None)
     a = ap.parse_args()
     if a.models_root is None:
@@ -143,13 +144,13 @@ def main():
 
     found = {}
     for name, pat in MODEL_FILES.items():
-        rel = pat.format(s=seed, lam=a.soft_lam)
+        rel = pat.format(s=seed, lam=a.soft_lam, wm='uniform' if float(a.soft_eta) == 0 else 'deficit', eta=a.soft_eta)
         hits = sorted(glob.glob(glob.escape(base + os.sep) + '*'.join(glob.escape(p) for p in rel.split('*'))))
         if hits:
             torch.save(torch.load(hits[0], map_location='cpu'), os.path.join(out, 'models', name + '.pt'))
             found[name] = hits[0]
         else:
-            print(f'[missing] {name}: no file matching {pat.format(s=seed, lam=a.soft_lam)}')
+            print(f'[missing] {name}: no file matching {rel}')
 
     meta = {'seed': seed, 'split': split, 'nickname': alg.data_loader.nickname,
             'forget_client': int(fc.id), 'retained_clients': [int(c.id) for c in retained],
