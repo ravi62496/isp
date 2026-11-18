@@ -69,6 +69,9 @@ class FedOSD(fp.UnlearnAlgorithm):
 
         if self.step_scale != 1.0:
             self.save_name += f" scale{self.step_scale}"
+        self.recovery_projection = str(params.get('recovery_projection', 'True')) == 'True' if params is not None else True
+        if not self.recovery_projection:
+            self.save_name += " rec_plain"  # E3 ablation: plain FedAvg recovery, no projection
         if hasattr(self, 'r_lr') and self.r_lr != 1e-6 and self.r_lr > 0:
             self.save_name += f" rlr{self.r_lr}"
 
@@ -420,7 +423,7 @@ class FedOSD(fp.UnlearnAlgorithm):
             for idx in range(len(g_locals)):
                 grad = g_locals[idx]
                 g_norm = torch.norm(grad)
-                if ga_norm > 1e-8:
+                if ga_norm > 1e-8 and self.recovery_projection:
                     g_locals[idx] = grad - grad @ ga / (ga_norm**2) * ga
                 g_locals[idx] = g_locals[idx] / (torch.norm(g_locals[idx]) + 1e-8) * g_norm
 

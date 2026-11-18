@@ -1,0 +1,6 @@
+torch
+numpy
+scikit-learn
+matplotlib
+grad-cam>=1.5
+gradio>=4

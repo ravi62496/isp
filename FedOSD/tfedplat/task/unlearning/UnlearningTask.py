@@ -14,14 +14,16 @@ class UnlearningTask(fp.BasicTask):
     def __init__(self, name='UnlearningTask'):
         super().__init__(name)
         
+        bd_type = self.params.get('backdoor', 'legacy')
+        root = self.name if bd_type == 'legacy' else self.name + '_' + bd_type
         if self.params.get('results_dir'):
             self.algorithm.save_folder = self.params['results_dir'].rstrip('/\\') + '/'
         else:
-            self.algorithm.save_folder = self.name + '/' + self.params['module'] + '/' + self.data_loader.nickname + '/UN' + str(self.params['unlearn_cn']) + '/E' + str(self.params['E']) + '/C' + str(self.params['C']) + '/' + self.params['algorithm'] + '/'
+            self.algorithm.save_folder = root + '/' + self.params['module'] + '/' + self.data_loader.nickname + '/UN' + str(self.params['unlearn_cn']) + '/E' + str(self.params['E']) + '/C' + str(self.params['C']) + '/' + self.params['algorithm'] + '/'
         unlearn_pretrain_flag = self.params['unlearn_pretrain']
         retrain_flag = eval(str(self.params.get('retrain', 'False')))
         
-        pretrained_model_folder = self.name + '/' + self.params['module'] + '/' + self.data_loader.nickname + '/UN' + str(self.params['unlearn_cn']) + '/E' + str(self.params['E']) + '/'
+        pretrained_model_folder = root + '/' + self.params['module'] + '/' + self.data_loader.nickname + '/UN' + str(self.params['unlearn_cn']) + '/E' + str(self.params['E']) + '/'
         self.algorithm.pretrained_model_folder = pretrained_model_folder
 
         if retrain_flag:
@@ -104,7 +106,13 @@ class UnlearningTask(fp.BasicTask):
         setattr(client, "local_backdoor_test_data", copy.deepcopy(client.local_training_data))
         setattr(client, "local_backdoor_test_number", client.local_training_number)
         
-        backdoor = fp.FigRandBackdoor(dataloader=self.algorithm.data_loader, save_folder=self.algorithm.pretrained_model_folder + 'backdoors/', save_name=f'seed{self.params["seed"]}_client_{client.id}_backdoor')
+        bd_save = dict(save_folder=self.algorithm.pretrained_model_folder + 'backdoors/', save_name=f'seed{self.params["seed"]}_client_{client.id}_backdoor')
+        if self.params.get('backdoor', 'legacy') == 'patch4':
+            target = fp.PatchBackdoor.choose_target(client.clean_training_data, self.algorithm.data_loader.target_class_num)
+            backdoor = fp.PatchBackdoor(target_label=target, size=4, dataloader=self.algorithm.data_loader, **bd_save)
+            print(f'[BACKDOOR] patch4, client {client.id}, target class {target}')
+        else:
+            backdoor = fp.FigRandBackdoor(dataloader=self.algorithm.data_loader, **bd_save)
         backdoor.add_backdoor(client.local_training_data, attack_portion=attack_portion)
         backdoor.add_backdoor(client.local_backdoor_test_data, attack_portion=attack_portion)
         setattr(client, "backdoor_setting", backdoor)  
@@ -260,7 +268,8 @@ class UnlearningTask(fp.BasicTask):
                         # Backdoor relabels y -> (y + 5) % 10. On CLEAN (untriggered) inputs, count how
                         # often the model still predicts the backdoor label (trigger-free leakage).
                         # (The old target-class mask was always empty: y == (y+5)%10 is never true.)
-                        backdoor_label = (batch_y + 5) % 10
+                        bds = getattr(client, 'backdoor_setting', None)
+                        backdoor_label = torch.full_like(batch_y, bds.target_label) if hasattr(bds, 'target_label') else (batch_y + 5) % 10
                         target_total += batch_y.shape[0]
                         target_correct += (preds == backdoor_label).sum().item()
 
@@ -404,6 +413,8 @@ class UnlearningTask(fp.BasicTask):
         parser.add_argument('--retrain', help='Train from scratch on retained clients only', type=str, default='False')
         parser.add_argument('--UR', help='Unlearning round, must be smaller than R', type=int, default=100)
         parser.add_argument('--r_lr', help='Learning rate in the post-training', type=float, default=-1)  
+        parser.add_argument('--backdoor', help='legacy (FigRandBackdoor, Stage 4) or patch4 (4x4 white, single target)', type=str, default='legacy', choices=['legacy', 'patch4'])
+        parser.add_argument('--recovery_projection', help='project recovery updates away from the unlearning direction (FedOSD post-training)', type=str, default='True')
         parser.add_argument('--adap_lam', help='Soft-constraint strength for adaptive FedOSD', type=float, default=20.0)
         parser.add_argument('--adap_weight_eta', help='Weight-update rate for adaptive FedOSD', type=float, default=0.4)
         parser.add_argument('--w_ema', help='Weight EMA rate for adapting client weights (0.05, 0.2, 0.5)', type=float, default=0.2)

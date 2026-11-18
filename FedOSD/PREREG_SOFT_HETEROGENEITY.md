@@ -34,3 +34,17 @@ better of {0.4, 1.0} chosen on the alpha=0.1 setting.
 - No test-split metric is read to make any choice above.
 - Code refuses any val->test fallback (FedOSD.py / UnlearningTask.py raise instead).
 - Final numbers are reported once, on seeds 31-33, with the configuration frozen here.
+
+## Amendment A (2026-11-18, before any unlearning result of this experiment was produced)
+An audit of the seed-999 checkpoints showed the legacy trigger (FigRandBackdoor: 3x3 random
+binary pattern at a mid-grey normalised value, per-sample label shift y->(y+5)%10) was never
+learned: the original model predicted the backdoor label equally often with the real trigger,
+8 random triggers, or no trigger (23.3-23.9%); held-out ASR was 5.3%. Changes:
+- All runs of this experiment use `--backdoor patch4`: solid 4x4 square at the per-channel
+  normalised white value, bottom-right corner, single target class = the class with the fewest
+  forget-client training samples. Outputs go to `UnlearningTask_patch4/`.
+- Gate before any unlearning run: the pretrained model must reach held-out triggered ASR >= 90%,
+  target rate without trigger <= 20%, clean retained accuracy >= 40% (`export_bundle.py --gate`).
+- The lambda-selection constraint "ASR <= 5%" now refers to this patch4 ASR.
+- Runs started with the legacy trigger (pretraining only, no unlearning) are discarded.
+Hypothesis, factors, seeds and decision rule are unchanged.

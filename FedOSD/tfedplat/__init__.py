@@ -32,6 +32,7 @@ from tfedplat.algorithm.unlearning.FedAvg_GA import FedAvg_GA
 
 # import backdoors
 from tfedplat.dataloaders.backdoors.FigRandBackdoor import FigRandBackdoor
+from tfedplat.dataloaders.backdoors.PatchBackdoor import PatchBackdoor
 
 
 # import dataloader

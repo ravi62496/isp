@@ -8,7 +8,7 @@ Phases (each phase finishes before the next starts):
   2   unlearning runs: 3 splits x eta{0,0.4,1.0} x 3 seeds (lam=20)  +  pat x lam{5,100} x eta0 x 3 seeds
 
 Usage (on the GPU server, from FedOSD/):
-  nohup python -u run_soft_sweep.py --gpus 0 1 2 3 4 5 6 7 > logs_soft/sweep.out 2>&1 &
+  nohup python -u run_soft_sweep.py --gpus 0 1 2 3 4 5 6 7 > logs_soft_patch4/sweep.out 2>&1 &
   python run_soft_sweep.py --dry_run          # print the job list only
 Re-running skips jobs whose .done marker exists.
 """
@@ -23,7 +23,8 @@ from queue import Queue
 
 TUNING_SEEDS = [101, 102, 103]
 FORBIDDEN_SEEDS = set(range(21, 31)) | {31, 32, 33}
-LOG_DIR = 'logs_soft'
+LOG_DIR = 'logs_soft_patch4'
+ROOT = 'UnlearningTask_patch4'  # separate from legacy-trigger outputs (UnlearningTask/)
 
 SPLITS = {  # name -> (dataloader args, nickname used in result folders)
     'pat':   ('--dataloader DataLoader_cifar10_pat', 'cifar10 pat balanced B200 NC2 N10'),
@@ -36,12 +37,12 @@ def prefix(seed, split):
     dl, _ = SPLITS[split]
     return (f"python -u run_UnlearningTask.py --seed {seed} --device {{dev}} --module CNN_CIFAR10 "
             f"{dl} --N 10 --NC 2 --balance True --B 200 --C 1.0 "
-            f"--E 1 --decay 0.999 --step_type bgd --unlearn_cn 1 --save_model True")
+            f"--E 1 --decay 0.999 --step_type bgd --unlearn_cn 1 --save_model True --backdoor patch4")
 
 
 def pretrain_exists(seed, split):
     _, nick = SPLITS[split]
-    pat = os.path.join('UnlearningTask', 'CNN_CIFAR10', nick, 'UN1', 'E1',
+    pat = os.path.join(ROOT, 'CNN_CIFAR10', nick, 'UN1', 'E1',
                        f'seed{seed}_unlearn_task_pretrained_model.pth')
     return len(glob.glob(pat)) > 0
 
@@ -91,7 +92,7 @@ def check_backdoor_clients():
     """Print which clients carry a backdoor per split. With pools prebuilt, each seed must map to
     exactly one client; a second file appearing for the same seed means a client mismatch."""
     for split, (_, nick) in SPLITS.items():
-        files = glob.glob(os.path.join('UnlearningTask', 'CNN_CIFAR10', nick, 'UN1', 'E1', 'backdoors', 'seed*_client_*_backdoor.npy'))
+        files = glob.glob(os.path.join(ROOT, 'CNN_CIFAR10', nick, 'UN1', 'E1', 'backdoors', 'seed*_client_*_backdoor.npy'))
         print(f'[check] {split}: backdoor files {sorted(os.path.basename(f) for f in files)}', flush=True)
 
 
@@ -155,6 +156,17 @@ def main():
             sys.exit(f'Phase {ph} had failures: {failed}. Fix and re-run (finished jobs are skipped).')
         if ph == '1b':
             check_backdoor_clients()
+            gate_fail = []
+            for s in a.seeds:
+                for sp in SPLITS:
+                    rc = subprocess.run([sys.executable, 'export_bundle.py', '--gate', '--seed', str(s), '--split', sp],
+                                        capture_output=True, text=True)
+                    print([l for l in rc.stdout.splitlines() if l.startswith('[GATE]')] or rc.stdout[-500:] + rc.stderr[-500:], flush=True)
+                    if rc.returncode != 0:
+                        gate_fail.append(f'{sp}/s{s}')
+            if gate_fail:
+                sys.exit(f'Backdoor gate FAILED for {gate_fail}: the original model did not learn the trigger. '
+                         f'No unlearning runs started.')
     print('\nAll phases complete.', flush=True)
 
 
