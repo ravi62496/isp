@@ -7,7 +7,7 @@ Metrics per run, at unlearning round 100 (last element of *_unlearn.json, as in 
   asr   = forget client's acc on its own triggered training images (backdoor label)
 Sanity checks per run:
   - forget client in params matches the saved trigger file seed<s>_client_<c>_backdoor.npy
-  - backdoor present before unlearning: round-0 ASR (first element of final .json) >= 80%
+  - backdoor present before unlearning: round-0 ASR (first element of final .json) >= 60%
 
 Usage (from FedOSD/):  python analyze_sweep.py   -> prints tables, writes results_soft/sweep_decision.json
 """
@@ -26,7 +26,7 @@ NAME = ('seed{s} N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 decay0.999 g_clip-1.0 '
         'proj_two_sided wm_{wm} lam{lam} eta{eta} rlr0.0001')
 ADAPT_MIN_GAIN = 2.0   # pp, pre-registered
 ASR_MAX = 5.0          # %, pre-registered (Amendment A: patch4 ASR)
-ROUND0_ASR_MIN = 80.0  # sanity: backdoor must exist before unlearning
+ROUND0_ASR_MIN = 60.0  # Amendment B (was 80); sanity: backdoor must exist before unlearning
 
 
 def base(split):

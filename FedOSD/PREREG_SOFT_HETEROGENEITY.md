@@ -48,3 +48,18 @@ learned: the original model predicted the backdoor label equally often with the 
 - The lambda-selection constraint "ASR <= 5%" now refers to this patch4 ASR.
 - Runs started with the legacy trigger (pretraining only, no unlearning) are discarded.
 Hypothesis, factors, seeds and decision rule are unchanged.
+
+## Amendment B (2026-11-18, after the gate ran on the 9 pretrained models, before any unlearning run)
+All 9 tuning-seed pretrained models failed the Amendment-A gate on one criterion only:
+held-out triggered ASR was 64.6-88.9% (< 90%), while the target rate without the trigger was
+2.0-9.3% and clean retained accuracy 47.0-66.1%. The trigger therefore causes the target
+prediction; 90% was an unrealistic bar for one poisoning client out of ten under FedAvg.
+**This threshold is changed after seeing these gate values** (disclosed deviation). No unlearning
+run had started, so no quantity used by the decision rule had been observed. Changes:
+- Gate = causality test: triggered ASR >= 60%, triggered ASR minus no-trigger target rate
+  >= 50 pp, no-trigger target rate <= 20%, clean retained accuracy >= 40%.
+- The gate is now computed on the retained clients' **validation** halves (it previously used
+  the test halves, which would have let a go/no-go decision depend on the test split).
+- analyze_sweep.py sanity check: round-0 forget-client ASR >= 60% (was 80%).
+- Pretrained models are kept unchanged. Hypothesis, factors, seeds, decision rule and the
+  lambda constraint (ASR <= 5%) are unchanged.

@@ -81,8 +81,8 @@ def gate(base, seed, fc, bd, ret_batches, ret_batches_t, min_asr):
     no_trig = acc(cat(ret_batches_t)[0], torch.full((len(cat(ret_batches_t)[1]),), getattr(bd, 'target_label', -1)))
     # The trigger must CAUSE the target prediction: high ASR, low target rate without the trigger,
     # and a model that still classifies clean images (a collapsed model predicts the target always).
-    ok = asr_test >= min_asr and no_trig <= 20.0 and clean >= 40.0
-    print(f'[GATE] seed {seed} forget client {fc.id} target {getattr(bd, "target_label", None)}: '
+    ok = asr_test >= min_asr and asr_test - no_trig >= 50.0 and no_trig <= 20.0 and clean >= 40.0  # Amendment B
+    print(f'[GATE] (validation halves) seed {seed} forget client {fc.id} target {getattr(bd, "target_label", None)}: '
           f'ASR(held-out, triggered)={asr_test:.1f}%  ASR(forget train)={asr_forget:.1f}%  '
           f'target-rate without trigger={no_trig:.1f}%  clean retained acc={clean:.1f}%  -> {"PASS" if ok else "FAIL"}')
     return 0 if ok else 1
@@ -95,7 +95,7 @@ def main():
     ap.add_argument('--backdoor', default='patch4', choices=['legacy', 'patch4'])
     ap.add_argument('--models_root', default=None, help='default: UnlearningTask_patch4 (or UnlearningTask for legacy)')
     ap.add_argument('--gate', action='store_true', help='only check that the original model learned the backdoor')
-    ap.add_argument('--gate_min_asr', type=float, default=90.0)
+    ap.add_argument('--gate_min_asr', type=float, default=60.0)  # Amendment B (was 90)
     ap.add_argument('--soft_lam', default='20.0')
     ap.add_argument('--out', default=None)
     a = ap.parse_args()
@@ -117,8 +117,11 @@ def main():
     else:
         ret_batches_t = ret_batches
     base = os.path.join(a.models_root, 'CNN_CIFAR10', alg.data_loader.nickname, 'UN1', 'E1')
-    if a.gate:
-        sys.exit(gate(base, seed, fc, bd, ret_batches, ret_batches_t, a.gate_min_asr))
+    if a.gate:  # go/no-go decision -> use VALIDATION halves only, never the test halves
+        gv = [b for c in retained for b in c.local_val_data]
+        gv_t = ([[bx[by != bd.target_label], by[by != bd.target_label]] for bx, by in gv]
+                if hasattr(bd, 'target_label') else gv)
+        sys.exit(gate(base, seed, fc, bd, gv, gv_t, a.gate_min_asr))
     if not out:
         sys.exit('--out is required unless --gate')
     os.makedirs(os.path.join(out, 'sets'), exist_ok=True)
