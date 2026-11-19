@@ -1,0 +1,1738 @@
+{
+  "seeds": [
+    31,
+    32,
+    33
+  ],
+  "summary": {
+    "original": {
+      "clean_acc": [
+        49.31481579939524,
+        0.3574923505032399,
+        3
+      ],
+      "asr": [
+        84.30331150690715,
+        0.41805015484059393,
+        3
+      ],
+      "forget_trig_acc": [
+        93.39999953905742,
+        0.5812619625516098,
+        3
+      ],
+      "forget_clean_acc": [
+        47.67333467801412,
+        6.882680261190268,
+        3
+      ],
+      "heldout_acc": [
+        48.44444493452708,
+        5.864730730971946,
+        3
+      ],
+      "floor_test": [
+        NaN,
+        NaN,
+        3
+      ],
+      "mia_attack_auc_mean": [
+        0.49570517306982415,
+        0.01443008896875443,
+        3
+      ],
+      "mia_attack_auc_std": [
+        0.013132094596404876,
+        0.0012685305407275206,
+        3
+      ],
+      "mia_attack_acc_mean": [
+        0.5014444444444445,
+        0.015692256484656657,
+        3
+      ],
+      "mia_attack_acc_std": [
+        0.012290559998103837,
+        0.0010790538240662765,
+        3
+      ],
+      "mia_n_splits": [
+        5.0,
+        0.0,
+        3
+      ],
+      "mia_threshold_auc_loss": [
+        0.5003814814814814,
+        0.014986068519030076,
+        3
+      ],
+      "mia_n_members": [
+        600.0,
+        0.0,
+        3
+      ],
+      "mia_n_nonmembers": [
+        600.0,
+        0.0,
+        3
+      ],
+      "mia_n_classes_used": [
+        2.0,
+        0.0,
+        3
+      ],
+      "distance_l2_param_to_retrain": [
+        7.237090217631757,
+        0.0191265545339615,
+        3
+      ],
+      "distance_mean_kl_retrain_to_model": [
+        0.5633199439963109,
+        0.008359347841245365,
+        3
+      ],
+      "gradcam_forget_train_trig_energy_in_trigger_mean": [
+        0.27963578701019287,
+        0.002550577306309601,
+        3
+      ],
+      "gradcam_forget_train_trig_energy_in_trigger_std": [
+        0.17630869150161743,
+        0.02675855651182015,
+        3
+      ],
+      "gradcam_forget_train_trig_ssim_vs_retrain_mean": [
+        0.25729598213938704,
+        0.004209343057639387,
+        3
+      ],
+      "gradcam_forget_train_trig_ssim_vs_retrain_std": [
+        0.1959566457858272,
+        0.012673323885424907,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_vs_retrain_mean": [
+        0.14540361420240602,
+        0.056774969379920756,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_vs_retrain_std": [
+        0.26504094495230857,
+        0.031096853748909303,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_undefined_frac": [
+        0.0033333333333333335,
+        0.004714045207910317,
+        3
+      ],
+      "gradcam_forget_train_trig_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_trigger_test_energy_in_trigger_mean": [
+        0.2627679258584976,
+        0.020821470459080383,
+        3
+      ],
+      "gradcam_trigger_test_energy_in_trigger_std": [
+        0.18098718921343485,
+        0.01284176855736994,
+        3
+      ],
+      "gradcam_trigger_test_ssim_vs_retrain_mean": [
+        0.24048534090069254,
+        0.017506823672000547,
+        3
+      ],
+      "gradcam_trigger_test_ssim_vs_retrain_std": [
+        0.18657193319194143,
+        0.0005122826935310038,
+        3
+      ],
+      "gradcam_trigger_test_pearson_vs_retrain_mean": [
+        0.1465686839787813,
+        0.044002564028095804,
+        3
+      ],
+      "gradcam_trigger_test_pearson_vs_retrain_std": [
+        0.2702502135907685,
+        0.0077656488653255916,
+        3
+      ],
+      "gradcam_trigger_test_pearson_undefined_frac": [
+        0.0016666666666666668,
+        0.0023570226039551583,
+        3
+      ],
+      "gradcam_trigger_test_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_retained_test_energy_in_trigger_mean": [
+        0.020594308152794838,
+        0.002053305583810671,
+        3
+      ],
+      "gradcam_retained_test_energy_in_trigger_std": [
+        0.028662660469611485,
+        0.0032810474345817808,
+        3
+      ],
+      "gradcam_retained_test_ssim_vs_retrain_mean": [
+        0.3287353418659718,
+        0.01303274882029494,
+        3
+      ],
+      "gradcam_retained_test_ssim_vs_retrain_std": [
+        0.1915761183317947,
+        0.0061416128559011905,
+        3
+      ],
+      "gradcam_retained_test_pearson_vs_retrain_mean": [
+        0.46764921980341034,
+        0.01050069334778334,
+        3
+      ],
+      "gradcam_retained_test_pearson_vs_retrain_std": [
+        0.3046745405418822,
+        0.003943603189663308,
+        3
+      ],
+      "gradcam_retained_test_pearson_undefined_frac": [
+        0.0016666666666666668,
+        0.0023570226039551583,
+        3
+      ],
+      "gradcam_retained_test_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_heldout_clean_energy_in_trigger_mean": [
+        0.011383875273168087,
+        0.003107480343987096,
+        3
+      ],
+      "gradcam_forget_heldout_clean_energy_in_trigger_std": [
+        0.01586047342667977,
+        0.005236277836946771,
+        3
+      ],
+      "gradcam_forget_heldout_clean_ssim_vs_retrain_mean": [
+        0.33742222753895806,
+        0.028665585316158867,
+        3
+      ],
+      "gradcam_forget_heldout_clean_ssim_vs_retrain_std": [
+        0.19150950181374382,
+        0.017504308119679176,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_vs_retrain_mean": [
+        0.4778883383190733,
+        0.04794504570152793,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_vs_retrain_std": [
+        0.3084434935569216,
+        0.01122317224608188,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_undefined_frac": [
+        0.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_heldout_clean_n_images": [
+        200.0,
+        0.0,
+        3
+      ]
+    },
+    "retrain": {
+      "clean_acc": [
+        59.59259271621704,
+        0.1458154944512298,
+        3
+      ],
+      "asr": [
+        4.581983387470245,
+        1.4191337263481352,
+        3
+      ],
+      "forget_trig_acc": [
+        3.540000133216381,
+        2.7874003895722477,
+        3
+      ],
+      "forget_clean_acc": [
+        50.69333414236704,
+        2.000689968733856,
+        3
+      ],
+      "heldout_acc": [
+        53.16666563351949,
+        2.4758093315196126,
+        3
+      ],
+      "floor_test": [
+        45.27777777777778,
+        3.247030932489434,
+        3
+      ],
+      "mia_attack_auc_mean": [
+        0.49291992938193135,
+        0.014573797716035371,
+        3
+      ],
+      "mia_attack_auc_std": [
+        0.012784770855410743,
+        0.003209498885181303,
+        3
+      ],
+      "mia_attack_acc_mean": [
+        0.4947777777777778,
+        0.010809232450680276,
+        3
+      ],
+      "mia_attack_acc_std": [
+        0.013008178876701299,
+        0.004151111508522349,
+        3
+      ],
+      "mia_n_splits": [
+        5.0,
+        0.0,
+        3
+      ],
+      "mia_threshold_auc_loss": [
+        0.4911583333333333,
+        0.012849936950414568,
+        3
+      ],
+      "mia_n_members": [
+        600.0,
+        0.0,
+        3
+      ],
+      "mia_n_nonmembers": [
+        600.0,
+        0.0,
+        3
+      ],
+      "mia_n_classes_used": [
+        2.0,
+        0.0,
+        3
+      ],
+      "distance_l2_param_to_retrain": [
+        0.0,
+        0.0,
+        3
+      ],
+      "distance_mean_kl_retrain_to_model": [
+        0.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_train_trig_energy_in_trigger_mean": [
+        0.030202453956007957,
+        0.01251996776962786,
+        3
+      ],
+      "gradcam_forget_train_trig_energy_in_trigger_std": [
+        0.06752696012457211,
+        0.010571135209134412,
+        3
+      ],
+      "gradcam_forget_train_trig_ssim_vs_retrain_mean": [
+        1.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_train_trig_ssim_vs_retrain_std": [
+        0.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_vs_retrain_mean": [
+        1.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_vs_retrain_std": [
+        0.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_undefined_frac": [
+        0.0033333333333333335,
+        0.004714045207910317,
+        3
+      ],
+      "gradcam_forget_train_trig_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_trigger_test_energy_in_trigger_mean": [
+        0.026827992871403694,
+        0.004124835529769117,
+        3
+      ],
+      "gradcam_trigger_test_energy_in_trigger_std": [
+        0.057416112472613655,
+        0.02005528962044568,
+        3
+      ],
+      "gradcam_trigger_test_ssim_vs_retrain_mean": [
+        1.0,
+        0.0,
+        3
+      ],
+      "gradcam_trigger_test_ssim_vs_retrain_std": [
+        0.0,
+        0.0,
+        3
+      ],
+      "gradcam_trigger_test_pearson_vs_retrain_mean": [
+        1.0,
+        0.0,
+        3
+      ],
+      "gradcam_trigger_test_pearson_vs_retrain_std": [
+        0.0,
+        0.0,
+        3
+      ],
+      "gradcam_trigger_test_pearson_undefined_frac": [
+        0.0016666666666666668,
+        0.0023570226039551583,
+        3
+      ],
+      "gradcam_trigger_test_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_retained_test_energy_in_trigger_mean": [
+        0.020681917667388916,
+        0.002221722960800268,
+        3
+      ],
+      "gradcam_retained_test_energy_in_trigger_std": [
+        0.040454394494493805,
+        0.015901791206604506,
+        3
+      ],
+      "gradcam_retained_test_ssim_vs_retrain_mean": [
+        1.0,
+        0.0,
+        3
+      ],
+      "gradcam_retained_test_ssim_vs_retrain_std": [
+        0.0,
+        0.0,
+        3
+      ],
+      "gradcam_retained_test_pearson_vs_retrain_mean": [
+        1.0,
+        0.0,
+        3
+      ],
+      "gradcam_retained_test_pearson_vs_retrain_std": [
+        0.0,
+        0.0,
+        3
+      ],
+      "gradcam_retained_test_pearson_undefined_frac": [
+        0.0,
+        0.0,
+        3
+      ],
+      "gradcam_retained_test_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_heldout_clean_energy_in_trigger_mean": [
+        0.015463477000594139,
+        0.003721326550324895,
+        3
+      ],
+      "gradcam_forget_heldout_clean_energy_in_trigger_std": [
+        0.01923892678072055,
+        0.006441831685292835,
+        3
+      ],
+      "gradcam_forget_heldout_clean_ssim_vs_retrain_mean": [
+        1.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_heldout_clean_ssim_vs_retrain_std": [
+        0.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_vs_retrain_mean": [
+        1.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_vs_retrain_std": [
+        0.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_undefined_frac": [
+        0.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_heldout_clean_n_images": [
+        200.0,
+        0.0,
+        3
+      ]
+    },
+    "fedosd_hard": {
+      "clean_acc": [
+        42.71604915459951,
+        1.0086886861750486,
+        3
+      ],
+      "asr": [
+        1.848377411564191,
+        1.3074434527604486,
+        3
+      ],
+      "forget_trig_acc": [
+        0.2133333357051015,
+        0.15173075744070944,
+        3
+      ],
+      "forget_clean_acc": [
+        38.2533331712087,
+        7.259096105401512,
+        3
+      ],
+      "heldout_acc": [
+        39.16666607062022,
+        5.328122438223215,
+        3
+      ],
+      "floor_test": [
+        23.555555555555557,
+        2.7799991118215113,
+        3
+      ],
+      "mia_attack_auc_mean": [
+        0.5039496884039453,
+        0.005123268654859325,
+        3
+      ],
+      "mia_attack_auc_std": [
+        0.009991855041271126,
+        0.0021758939724519023,
+        3
+      ],
+      "mia_attack_acc_mean": [
+        0.5051111111111112,
+        0.006533862412439647,
+        3
+      ],
+      "mia_attack_acc_std": [
+        0.00982148626871182,
+        0.003088431231791485,
+        3
+      ],
+      "mia_n_splits": [
+        5.0,
+        0.0,
+        3
+      ],
+      "mia_threshold_auc_loss": [
+        0.49908240740740745,
+        0.017416885274387586,
+        3
+      ],
+      "mia_n_members": [
+        600.0,
+        0.0,
+        3
+      ],
+      "mia_n_nonmembers": [
+        600.0,
+        0.0,
+        3
+      ],
+      "mia_n_classes_used": [
+        2.0,
+        0.0,
+        3
+      ],
+      "distance_l2_param_to_retrain": [
+        7.223084077967759,
+        0.01823116930449199,
+        3
+      ],
+      "distance_mean_kl_retrain_to_model": [
+        0.7528960410873909,
+        0.05083740293729021,
+        3
+      ],
+      "gradcam_forget_train_trig_energy_in_trigger_mean": [
+        0.48651031653086346,
+        0.08875625287165717,
+        3
+      ],
+      "gradcam_forget_train_trig_energy_in_trigger_std": [
+        0.3594171901543935,
+        0.04014366724056176,
+        3
+      ],
+      "gradcam_forget_train_trig_ssim_vs_retrain_mean": [
+        0.32193043810109495,
+        0.03039308493994707,
+        3
+      ],
+      "gradcam_forget_train_trig_ssim_vs_retrain_std": [
+        0.2283394627919754,
+        0.014148562618510113,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_vs_retrain_mean": [
+        0.21157493784663803,
+        0.03912925271236979,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_vs_retrain_std": [
+        0.26484040365193245,
+        0.0013873956543284862,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_undefined_frac": [
+        0.12833333333333333,
+        0.07168604389202189,
+        3
+      ],
+      "gradcam_forget_train_trig_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_trigger_test_energy_in_trigger_mean": [
+        0.31417792042096454,
+        0.02336785778009515,
+        3
+      ],
+      "gradcam_trigger_test_energy_in_trigger_std": [
+        0.32659368713696796,
+        0.05700520080760327,
+        3
+      ],
+      "gradcam_trigger_test_ssim_vs_retrain_mean": [
+        0.287655145658364,
+        0.023600834161725405,
+        3
+      ],
+      "gradcam_trigger_test_ssim_vs_retrain_std": [
+        0.21958875436623718,
+        0.006100451297058854,
+        3
+      ],
+      "gradcam_trigger_test_pearson_vs_retrain_mean": [
+        0.25144874296787695,
+        0.029126557121868932,
+        3
+      ],
+      "gradcam_trigger_test_pearson_vs_retrain_std": [
+        0.2975783767730687,
+        0.016920545440262426,
+        3
+      ],
+      "gradcam_trigger_test_pearson_undefined_frac": [
+        0.06,
+        0.03488074922742725,
+        3
+      ],
+      "gradcam_trigger_test_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_retained_test_energy_in_trigger_mean": [
+        0.018427418544888496,
+        0.0011896412909714255,
+        3
+      ],
+      "gradcam_retained_test_energy_in_trigger_std": [
+        0.022256055225928623,
+        0.0019820687789788767,
+        3
+      ],
+      "gradcam_retained_test_ssim_vs_retrain_mean": [
+        0.3065544790302211,
+        0.02409978819453354,
+        3
+      ],
+      "gradcam_retained_test_ssim_vs_retrain_std": [
+        0.19167759785975466,
+        0.01034703229325802,
+        3
+      ],
+      "gradcam_retained_test_pearson_vs_retrain_mean": [
+        0.4814251882108156,
+        0.030008836416739307,
+        3
+      ],
+      "gradcam_retained_test_pearson_vs_retrain_std": [
+        0.2949756220707381,
+        0.01602427521778961,
+        3
+      ],
+      "gradcam_retained_test_pearson_undefined_frac": [
+        0.008333333333333333,
+        0.004714045207910317,
+        3
+      ],
+      "gradcam_retained_test_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_heldout_clean_energy_in_trigger_mean": [
+        0.010346555771927038,
+        0.002276272661475764,
+        3
+      ],
+      "gradcam_forget_heldout_clean_energy_in_trigger_std": [
+        0.013455672189593315,
+        0.004158260772888193,
+        3
+      ],
+      "gradcam_forget_heldout_clean_ssim_vs_retrain_mean": [
+        0.3243225063430152,
+        0.02949919644433064,
+        3
+      ],
+      "gradcam_forget_heldout_clean_ssim_vs_retrain_std": [
+        0.18609628221833083,
+        0.020311857840596834,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_vs_retrain_mean": [
+        0.4698510360291778,
+        0.026423073625634435,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_vs_retrain_std": [
+        0.29278865761829903,
+        0.018623128647963443,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_undefined_frac": [
+        0.006666666666666667,
+        0.009428090415820633,
+        3
+      ],
+      "gradcam_forget_heldout_clean_n_images": [
+        200.0,
+        0.0,
+        3
+      ]
+    },
+    "soft_fedosd": {
+      "clean_acc": [
+        42.16666718324026,
+        1.0544172942745633,
+        3
+      ],
+      "asr": [
+        1.77194078763326,
+        1.2532114478513086,
+        3
+      ],
+      "forget_trig_acc": [
+        0.2000000017384688,
+        0.1451436085940002,
+        3
+      ],
+      "forget_clean_acc": [
+        36.5066667397817,
+        7.433927996548406,
+        3
+      ],
+      "heldout_acc": [
+        37.77777850627899,
+        5.735421261370731,
+        3
+      ],
+      "floor_test": [
+        23.166666666666668,
+        3.423773097362356,
+        3
+      ],
+      "mia_attack_auc_mean": [
+        0.5045133964533762,
+        0.004286604303922805,
+        3
+      ],
+      "mia_attack_auc_std": [
+        0.010137063644447624,
+        0.002581312441407617,
+        3
+      ],
+      "mia_attack_acc_mean": [
+        0.5063333333333334,
+        0.006944222218666536,
+        3
+      ],
+      "mia_attack_acc_std": [
+        0.008501108307877528,
+        0.003435874213618671,
+        3
+      ],
+      "mia_n_splits": [
+        5.0,
+        0.0,
+        3
+      ],
+      "mia_threshold_auc_loss": [
+        0.4992722222222222,
+        0.017259628880559666,
+        3
+      ],
+      "mia_n_members": [
+        600.0,
+        0.0,
+        3
+      ],
+      "mia_n_nonmembers": [
+        600.0,
+        0.0,
+        3
+      ],
+      "mia_n_classes_used": [
+        2.0,
+        0.0,
+        3
+      ],
+      "distance_l2_param_to_retrain": [
+        7.223462121411317,
+        0.018326011574710678,
+        3
+      ],
+      "distance_mean_kl_retrain_to_model": [
+        0.7711300944309308,
+        0.05393712257377133,
+        3
+      ],
+      "gradcam_forget_train_trig_energy_in_trigger_mean": [
+        0.49164604147275287,
+        0.08404399008365426,
+        3
+      ],
+      "gradcam_forget_train_trig_energy_in_trigger_std": [
+        0.36251141627629596,
+        0.037409187275289454,
+        3
+      ],
+      "gradcam_forget_train_trig_ssim_vs_retrain_mean": [
+        0.3208900666039539,
+        0.03164566974254213,
+        3
+      ],
+      "gradcam_forget_train_trig_ssim_vs_retrain_std": [
+        0.22855150648497372,
+        0.014058487275490633,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_vs_retrain_mean": [
+        0.20921459923470387,
+        0.03539190135460076,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_vs_retrain_std": [
+        0.2636530408049837,
+        0.0003569921032169164,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_undefined_frac": [
+        0.13333333333333333,
+        0.06548960901462833,
+        3
+      ],
+      "gradcam_forget_train_trig_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_trigger_test_energy_in_trigger_mean": [
+        0.3217798372109731,
+        0.02273882156143015,
+        3
+      ],
+      "gradcam_trigger_test_energy_in_trigger_std": [
+        0.33161482214927673,
+        0.055741341242568396,
+        3
+      ],
+      "gradcam_trigger_test_ssim_vs_retrain_mean": [
+        0.2867930817955857,
+        0.025303043355674425,
+        3
+      ],
+      "gradcam_trigger_test_ssim_vs_retrain_std": [
+        0.21944897088153018,
+        0.0062302462279480155,
+        3
+      ],
+      "gradcam_trigger_test_pearson_vs_retrain_mean": [
+        0.2481978498558536,
+        0.03178823284938486,
+        3
+      ],
+      "gradcam_trigger_test_pearson_vs_retrain_std": [
+        0.2965527131254894,
+        0.01763752931881668,
+        3
+      ],
+      "gradcam_trigger_test_pearson_undefined_frac": [
+        0.05833333333333333,
+        0.03299831645537222,
+        3
+      ],
+      "gradcam_trigger_test_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_retained_test_energy_in_trigger_mean": [
+        0.01832193322479725,
+        0.0010933806278943755,
+        3
+      ],
+      "gradcam_retained_test_energy_in_trigger_std": [
+        0.022548910851279896,
+        0.0021665485868066206,
+        3
+      ],
+      "gradcam_retained_test_ssim_vs_retrain_mean": [
+        0.30751744270190784,
+        0.025392974995009563,
+        3
+      ],
+      "gradcam_retained_test_ssim_vs_retrain_std": [
+        0.1916869431384135,
+        0.009854347489994503,
+        3
+      ],
+      "gradcam_retained_test_pearson_vs_retrain_mean": [
+        0.48090117257442483,
+        0.02906238319278651,
+        3
+      ],
+      "gradcam_retained_test_pearson_vs_retrain_std": [
+        0.296878023820033,
+        0.014904709196592435,
+        3
+      ],
+      "gradcam_retained_test_pearson_undefined_frac": [
+        0.008333333333333333,
+        0.004714045207910317,
+        3
+      ],
+      "gradcam_retained_test_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_heldout_clean_energy_in_trigger_mean": [
+        0.010350526000062624,
+        0.002480312038755259,
+        3
+      ],
+      "gradcam_forget_heldout_clean_energy_in_trigger_std": [
+        0.013663056306540966,
+        0.004635902784688095,
+        3
+      ],
+      "gradcam_forget_heldout_clean_ssim_vs_retrain_mean": [
+        0.32380891258716354,
+        0.02861073401432756,
+        3
+      ],
+      "gradcam_forget_heldout_clean_ssim_vs_retrain_std": [
+        0.18648582748389753,
+        0.020389218304055847,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_vs_retrain_mean": [
+        0.46690021245418295,
+        0.024831335335568083,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_vs_retrain_std": [
+        0.2947867188488551,
+        0.0199061528574071,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_undefined_frac": [
+        0.006666666666666667,
+        0.009428090415820633,
+        3
+      ],
+      "gradcam_forget_heldout_clean_n_images": [
+        200.0,
+        0.0,
+        3
+      ]
+    },
+    "plain_ga": {
+      "clean_acc": [
+        34.290122985839844,
+        2.1437981665690984,
+        3
+      ],
+      "asr": [
+        0.305746643183132,
+        0.23910291507708356,
+        3
+      ],
+      "forget_trig_acc": [
+        0.026666665993010003,
+        0.018856180355294072,
+        3
+      ],
+      "forget_clean_acc": [
+        2.459999918937683,
+        1.9250627039857073,
+        3
+      ],
+      "heldout_acc": [
+        2.777777798473835,
+        2.182987015273663,
+        3
+      ],
+      "floor_test": [
+        2.5555555555555554,
+        1.8872541946070032,
+        3
+      ],
+      "mia_attack_auc_mean": [
+        0.5131823444622636,
+        0.01210709507518347,
+        3
+      ],
+      "mia_attack_auc_std": [
+        0.012137093331972916,
+        0.003846183166278811,
+        3
+      ],
+      "mia_attack_acc_mean": [
+        0.5102222222222222,
+        0.007212814385385544,
+        3
+      ],
+      "mia_attack_acc_std": [
+        0.013681630782934044,
+        0.004036639766062017,
+        3
+      ],
+      "mia_n_splits": [
+        5.0,
+        0.0,
+        3
+      ],
+      "mia_threshold_auc_loss": [
+        0.514224074074074,
+        0.014510172806807007,
+        3
+      ],
+      "mia_n_members": [
+        600.0,
+        0.0,
+        3
+      ],
+      "mia_n_nonmembers": [
+        600.0,
+        0.0,
+        3
+      ],
+      "mia_n_classes_used": [
+        2.0,
+        0.0,
+        3
+      ],
+      "distance_l2_param_to_retrain": [
+        7.228319804564742,
+        0.018853618313262852,
+        3
+      ],
+      "distance_mean_kl_retrain_to_model": [
+        1.5377777930757075,
+        0.3049902448206442,
+        3
+      ],
+      "gradcam_forget_train_trig_energy_in_trigger_mean": [
+        0.38747285803159076,
+        0.13121739938181978,
+        3
+      ],
+      "gradcam_forget_train_trig_energy_in_trigger_std": [
+        0.3789248764514923,
+        0.039945927136995324,
+        3
+      ],
+      "gradcam_forget_train_trig_ssim_vs_retrain_mean": [
+        0.31970928329323306,
+        0.02893678779201017,
+        3
+      ],
+      "gradcam_forget_train_trig_ssim_vs_retrain_std": [
+        0.23105471574561956,
+        0.011797784855447375,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_vs_retrain_mean": [
+        0.2464038485397135,
+        0.0697574258179122,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_vs_retrain_std": [
+        0.28311589145695965,
+        0.02200305407720605,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_undefined_frac": [
+        0.22666666666666666,
+        0.03009245014211298,
+        3
+      ],
+      "gradcam_forget_train_trig_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_trigger_test_energy_in_trigger_mean": [
+        0.3041137953599294,
+        0.03763260494071294,
+        3
+      ],
+      "gradcam_trigger_test_energy_in_trigger_std": [
+        0.36210495233535767,
+        0.016498394228240922,
+        3
+      ],
+      "gradcam_trigger_test_ssim_vs_retrain_mean": [
+        0.270856817858769,
+        0.02977277965354804,
+        3
+      ],
+      "gradcam_trigger_test_ssim_vs_retrain_std": [
+        0.22364402293022012,
+        0.0048557541150853955,
+        3
+      ],
+      "gradcam_trigger_test_pearson_vs_retrain_mean": [
+        0.2385188073207021,
+        0.0008633118677287712,
+        3
+      ],
+      "gradcam_trigger_test_pearson_vs_retrain_std": [
+        0.295353794357399,
+        0.009918174353551591,
+        3
+      ],
+      "gradcam_trigger_test_pearson_undefined_frac": [
+        0.12,
+        0.014719601443879746,
+        3
+      ],
+      "gradcam_trigger_test_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_retained_test_energy_in_trigger_mean": [
+        0.01749448385089636,
+        0.002244295323310205,
+        3
+      ],
+      "gradcam_retained_test_energy_in_trigger_std": [
+        0.021974193553129833,
+        0.003232592234177482,
+        3
+      ],
+      "gradcam_retained_test_ssim_vs_retrain_mean": [
+        0.2795911560729693,
+        0.011967064757041807,
+        3
+      ],
+      "gradcam_retained_test_ssim_vs_retrain_std": [
+        0.19436279251552277,
+        0.009493241949572387,
+        3
+      ],
+      "gradcam_retained_test_pearson_vs_retrain_mean": [
+        0.42050378579309045,
+        0.028178311500861402,
+        3
+      ],
+      "gradcam_retained_test_pearson_vs_retrain_std": [
+        0.32548923888324915,
+        0.01366719014628596,
+        3
+      ],
+      "gradcam_retained_test_pearson_undefined_frac": [
+        0.015,
+        0.017795130420052187,
+        3
+      ],
+      "gradcam_retained_test_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_heldout_clean_energy_in_trigger_mean": [
+        0.009530833611885706,
+        0.0019285493377150457,
+        3
+      ],
+      "gradcam_forget_heldout_clean_energy_in_trigger_std": [
+        0.017050609923899174,
+        0.004638082671749434,
+        3
+      ],
+      "gradcam_forget_heldout_clean_ssim_vs_retrain_mean": [
+        0.27990697710269935,
+        0.02229701458078272,
+        3
+      ],
+      "gradcam_forget_heldout_clean_ssim_vs_retrain_std": [
+        0.1947558011458952,
+        0.026099376368795408,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_vs_retrain_mean": [
+        0.3639560173716039,
+        0.020940683352980476,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_vs_retrain_std": [
+        0.33062787479835937,
+        0.027374493355087886,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_undefined_frac": [
+        0.024999999999999998,
+        0.01632993161855452,
+        3
+      ],
+      "gradcam_forget_heldout_clean_n_images": [
+        200.0,
+        0.0,
+        3
+      ]
+    },
+    "posttrain_plain": {
+      "clean_acc": [
+        51.586419343948364,
+        0.44272479293870476,
+        3
+      ],
+      "asr": [
+        6.616350822150707,
+        2.812125603813551,
+        3
+      ],
+      "forget_trig_acc": [
+        4.133333265781403,
+        1.3070407421615866,
+        3
+      ],
+      "forget_clean_acc": [
+        43.31333339214325,
+        4.56462657289452,
+        3
+      ],
+      "heldout_acc": [
+        45.61111032962799,
+        3.6166617584065577,
+        3
+      ],
+      "floor_test": [
+        33.44444444444444,
+        1.9829520330638595,
+        3
+      ],
+      "mia_attack_auc_mean": [
+        0.49682441924251836,
+        0.016135648142199265,
+        3
+      ],
+      "mia_attack_auc_std": [
+        0.009595206854844905,
+        0.0004389683489136996,
+        3
+      ],
+      "mia_attack_acc_mean": [
+        0.49911111111111106,
+        0.00914627361211406,
+        3
+      ],
+      "mia_attack_acc_std": [
+        0.013882251239459742,
+        0.0052233227474968716,
+        3
+      ],
+      "mia_n_splits": [
+        5.0,
+        0.0,
+        3
+      ],
+      "mia_threshold_auc_loss": [
+        0.49435462962962967,
+        0.019416483909134804,
+        3
+      ],
+      "mia_n_members": [
+        600.0,
+        0.0,
+        3
+      ],
+      "mia_n_nonmembers": [
+        600.0,
+        0.0,
+        3
+      ],
+      "mia_n_classes_used": [
+        2.0,
+        0.0,
+        3
+      ],
+      "distance_l2_param_to_retrain": [
+        7.210059831747363,
+        0.018033393571904005,
+        3
+      ],
+      "distance_mean_kl_retrain_to_model": [
+        0.5030746139229753,
+        0.010171076235770266,
+        3
+      ],
+      "gradcam_forget_train_trig_energy_in_trigger_mean": [
+        0.4365389247735341,
+        0.10117599092900417,
+        3
+      ],
+      "gradcam_forget_train_trig_energy_in_trigger_std": [
+        0.3204655746618907,
+        0.03874858340407883,
+        3
+      ],
+      "gradcam_forget_train_trig_ssim_vs_retrain_mean": [
+        0.32089846000908173,
+        0.030453029934888277,
+        3
+      ],
+      "gradcam_forget_train_trig_ssim_vs_retrain_std": [
+        0.22169631793444758,
+        0.014438470026144382,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_vs_retrain_mean": [
+        0.2263692401536718,
+        0.04041862213337041,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_vs_retrain_std": [
+        0.27437864707448684,
+        0.015000645098890772,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_undefined_frac": [
+        0.028333333333333335,
+        0.020548046676563257,
+        3
+      ],
+      "gradcam_forget_train_trig_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_trigger_test_energy_in_trigger_mean": [
+        0.2942927877108256,
+        0.03237076692498785,
+        3
+      ],
+      "gradcam_trigger_test_energy_in_trigger_std": [
+        0.2892436434825261,
+        0.04921028347524056,
+        3
+      ],
+      "gradcam_trigger_test_ssim_vs_retrain_mean": [
+        0.28774623365071106,
+        0.02240394312570079,
+        3
+      ],
+      "gradcam_trigger_test_ssim_vs_retrain_std": [
+        0.21032478945719346,
+        0.006582591479586759,
+        3
+      ],
+      "gradcam_trigger_test_pearson_vs_retrain_mean": [
+        0.25416821451965843,
+        0.02658527755477218,
+        3
+      ],
+      "gradcam_trigger_test_pearson_vs_retrain_std": [
+        0.28720035852192755,
+        0.009470932475046703,
+        3
+      ],
+      "gradcam_trigger_test_pearson_undefined_frac": [
+        0.02,
+        0.014719601443879748,
+        3
+      ],
+      "gradcam_trigger_test_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_retained_test_energy_in_trigger_mean": [
+        0.020643727853894234,
+        0.0016246054528475332,
+        3
+      ],
+      "gradcam_retained_test_energy_in_trigger_std": [
+        0.0302544254809618,
+        0.0025982111312988112,
+        3
+      ],
+      "gradcam_retained_test_ssim_vs_retrain_mean": [
+        0.3130318511556473,
+        0.024625831572592977,
+        3
+      ],
+      "gradcam_retained_test_ssim_vs_retrain_std": [
+        0.1910341962502128,
+        0.009997815671772032,
+        3
+      ],
+      "gradcam_retained_test_pearson_vs_retrain_mean": [
+        0.49699962995175256,
+        0.029733569700940515,
+        3
+      ],
+      "gradcam_retained_test_pearson_vs_retrain_std": [
+        0.2864523787910984,
+        0.012424663132214275,
+        3
+      ],
+      "gradcam_retained_test_pearson_undefined_frac": [
+        0.0033333333333333335,
+        0.0023570226039551583,
+        3
+      ],
+      "gradcam_retained_test_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_heldout_clean_energy_in_trigger_mean": [
+        0.010948529466986656,
+        0.002132208139921879,
+        3
+      ],
+      "gradcam_forget_heldout_clean_energy_in_trigger_std": [
+        0.014422577805817127,
+        0.004147076099101241,
+        3
+      ],
+      "gradcam_forget_heldout_clean_ssim_vs_retrain_mean": [
+        0.3340917433905996,
+        0.030319067762498205,
+        3
+      ],
+      "gradcam_forget_heldout_clean_ssim_vs_retrain_std": [
+        0.18610913334179777,
+        0.019365360849276824,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_vs_retrain_mean": [
+        0.4901462349143883,
+        0.04064597044422245,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_vs_retrain_std": [
+        0.28957823884944006,
+        0.01544815531802078,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_undefined_frac": [
+        0.0016666666666666668,
+        0.0023570226039551583,
+        3
+      ],
+      "gradcam_forget_heldout_clean_n_images": [
+        200.0,
+        0.0,
+        3
+      ]
+    },
+    "posttrain_proj": {
+      "clean_acc": [
+        51.5925923983256,
+        0.48667648085958104,
+        3
+      ],
+      "asr": [
+        6.428637666006883,
+        2.8475651350753455,
+        3
+      ],
+      "forget_trig_acc": [
+        3.853333368897438,
+        1.1707926680085954,
+        3
+      ],
+      "forget_clean_acc": [
+        43.33333373069763,
+        4.591944387745383,
+        3
+      ],
+      "heldout_acc": [
+        45.61111032962799,
+        3.6166617584065577,
+        3
+      ],
+      "floor_test": [
+        33.333333333333336,
+        1.9051586888313607,
+        3
+      ],
+      "mia_attack_auc_mean": [
+        0.496753307069667,
+        0.01612557316478066,
+        3
+      ],
+      "mia_attack_auc_std": [
+        0.009683530322579488,
+        0.0004574957213247197,
+        3
+      ],
+      "mia_attack_acc_mean": [
+        0.49922222222222223,
+        0.00858220956325663,
+        3
+      ],
+      "mia_attack_acc_std": [
+        0.013489486881825191,
+        0.005116824387568339,
+        3
+      ],
+      "mia_n_splits": [
+        5.0,
+        0.0,
+        3
+      ],
+      "mia_threshold_auc_loss": [
+        0.49431851851851843,
+        0.019510693007486233,
+        3
+      ],
+      "mia_n_members": [
+        600.0,
+        0.0,
+        3
+      ],
+      "mia_n_nonmembers": [
+        600.0,
+        0.0,
+        3
+      ],
+      "mia_n_classes_used": [
+        2.0,
+        0.0,
+        3
+      ],
+      "distance_l2_param_to_retrain": [
+        7.21020277513567,
+        0.018107706940220056,
+        3
+      ],
+      "distance_mean_kl_retrain_to_model": [
+        0.5038681556996014,
+        0.010228820168613298,
+        3
+      ],
+      "gradcam_forget_train_trig_energy_in_trigger_mean": [
+        0.4359652002652486,
+        0.09983093423657838,
+        3
+      ],
+      "gradcam_forget_train_trig_energy_in_trigger_std": [
+        0.32171451052029926,
+        0.03801667220995286,
+        3
+      ],
+      "gradcam_forget_train_trig_ssim_vs_retrain_mean": [
+        0.321681321082848,
+        0.030245326825743074,
+        3
+      ],
+      "gradcam_forget_train_trig_ssim_vs_retrain_std": [
+        0.22223034809161354,
+        0.0136571113304497,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_vs_retrain_mean": [
+        0.22720856975691553,
+        0.04008148473685876,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_vs_retrain_std": [
+        0.27471323929916625,
+        0.015250625588691826,
+        3
+      ],
+      "gradcam_forget_train_trig_pearson_undefined_frac": [
+        0.028333333333333335,
+        0.020548046676563257,
+        3
+      ],
+      "gradcam_forget_train_trig_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_trigger_test_energy_in_trigger_mean": [
+        0.2927374243736267,
+        0.032490078782791955,
+        3
+      ],
+      "gradcam_trigger_test_energy_in_trigger_std": [
+        0.28862100342909497,
+        0.049141792816315255,
+        3
+      ],
+      "gradcam_trigger_test_ssim_vs_retrain_mean": [
+        0.28798523287176275,
+        0.022205544341245272,
+        3
+      ],
+      "gradcam_trigger_test_ssim_vs_retrain_std": [
+        0.2103013066278526,
+        0.006483165177318244,
+        3
+      ],
+      "gradcam_trigger_test_pearson_vs_retrain_mean": [
+        0.25589805522463555,
+        0.02634945112859984,
+        3
+      ],
+      "gradcam_trigger_test_pearson_vs_retrain_std": [
+        0.28769992761075486,
+        0.00994226468233997,
+        3
+      ],
+      "gradcam_trigger_test_pearson_undefined_frac": [
+        0.02,
+        0.014719601443879748,
+        3
+      ],
+      "gradcam_trigger_test_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_retained_test_energy_in_trigger_mean": [
+        0.020721379046638806,
+        0.00158126686213536,
+        3
+      ],
+      "gradcam_retained_test_energy_in_trigger_std": [
+        0.030207743247350056,
+        0.0024264195997429263,
+        3
+      ],
+      "gradcam_retained_test_ssim_vs_retrain_mean": [
+        0.31273636429476886,
+        0.024373676452391718,
+        3
+      ],
+      "gradcam_retained_test_ssim_vs_retrain_std": [
+        0.19091588486574532,
+        0.01001006499950619,
+        3
+      ],
+      "gradcam_retained_test_pearson_vs_retrain_mean": [
+        0.49578605858476704,
+        0.03004533441308738,
+        3
+      ],
+      "gradcam_retained_test_pearson_vs_retrain_std": [
+        0.286854873651271,
+        0.01263433892653857,
+        3
+      ],
+      "gradcam_retained_test_pearson_undefined_frac": [
+        0.0033333333333333335,
+        0.0023570226039551583,
+        3
+      ],
+      "gradcam_retained_test_n_images": [
+        200.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_heldout_clean_energy_in_trigger_mean": [
+        0.010962365505596003,
+        0.0021941826502453877,
+        3
+      ],
+      "gradcam_forget_heldout_clean_energy_in_trigger_std": [
+        0.014452361191312471,
+        0.004232340119174738,
+        3
+      ],
+      "gradcam_forget_heldout_clean_ssim_vs_retrain_mean": [
+        0.33414348807766253,
+        0.02979957369767911,
+        3
+      ],
+      "gradcam_forget_heldout_clean_ssim_vs_retrain_std": [
+        0.18672866518277573,
+        0.01880517639882918,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_vs_retrain_mean": [
+        0.4888964065855254,
+        0.04068868943009866,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_vs_retrain_std": [
+        0.29052736565922715,
+        0.014388140962929435,
+        3
+      ],
+      "gradcam_forget_heldout_clean_pearson_undefined_frac": [
+        0.0,
+        0.0,
+        3
+      ],
+      "gradcam_forget_heldout_clean_n_images": [
+        200.0,
+        0.0,
+        3
+      ]
+    }
+  }
+}

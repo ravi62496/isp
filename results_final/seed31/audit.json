@@ -1,0 +1,470 @@
+{
+  "meta": {
+    "bundle": "../bundles/seed31",
+    "mock": false,
+    "device": "cuda",
+    "seed": 0,
+    "mia_split_seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "n_cam_images_per_group": 200,
+    "reference_model": "retrain",
+    "skipped_models": {},
+    "figure": {
+      "path": "audit_gradcam.png",
+      "models": [
+        "original",
+        "soft_fedosd",
+        "fedosd_hard",
+        "retrain"
+      ],
+      "indices": {
+        "forget_train_trig": [
+          398,
+          3833,
+          4836,
+          4572,
+          636,
+          2545
+        ],
+        "retained_test": [
+          2308,
+          1658,
+          2939,
+          142,
+          4580,
+          1176
+        ],
+        "forget_heldout_clean": [
+          434,
+          205,
+          122,
+          224,
+          479,
+          569
+        ]
+      }
+    },
+    "trigger_mask_area_fraction": 0.015625,
+    "cam_target": "label stored with each set (same for every model)"
+  },
+  "models": {
+    "original": {
+      "mia": {
+        "attack_auc_mean": 0.486119908048361,
+        "attack_auc_std": 0.011589453859121301,
+        "attack_acc_mean": 0.49366666666666664,
+        "attack_acc_std": 0.010770329614268994,
+        "n_splits": 5,
+        "threshold_auc_loss": 0.5096111111111111,
+        "n_members": 600,
+        "n_nonmembers": 600,
+        "n_classes_used": 2
+      },
+      "distance": {
+        "l2_param_to_retrain": 7.262862978955893,
+        "mean_kl_retrain_to_model": 0.5740184778251936
+      },
+      "gradcam": {
+        "forget_train_trig": {
+          "energy_in_trigger_mean": 0.28310078382492065,
+          "energy_in_trigger_std": 0.15557076036930084,
+          "ssim_vs_retrain_mean": 0.2520167644847793,
+          "ssim_vs_retrain_std": 0.17811840431931067,
+          "pearson_vs_retrain_mean": 0.1717828902789702,
+          "pearson_vs_retrain_std": 0.2859885010699354,
+          "pearson_undefined_frac": 0.0,
+          "n_images": 200
+        },
+        "trigger_test": {
+          "energy_in_trigger_mean": 0.24286659061908722,
+          "energy_in_trigger_std": 0.16849124431610107,
+          "ssim_vs_retrain_mean": 0.26519708433797556,
+          "ssim_vs_retrain_std": 0.1866884149460306,
+          "pearson_vs_retrain_mean": 0.17832911553308242,
+          "pearson_vs_retrain_std": 0.28076007160837213,
+          "pearson_undefined_frac": 0.0,
+          "n_images": 200
+        },
+        "retained_test": {
+          "energy_in_trigger_mean": 0.022505175322294235,
+          "energy_in_trigger_std": 0.032828718423843384,
+          "ssim_vs_retrain_mean": 0.3134647312504878,
+          "ssim_vs_retrain_std": 0.18873135493259569,
+          "pearson_vs_retrain_mean": 0.45355715074951747,
+          "pearson_vs_retrain_std": 0.30405543722966066,
+          "pearson_undefined_frac": 0.0,
+          "n_images": 200
+        },
+        "forget_heldout_clean": {
+          "energy_in_trigger_mean": 0.009002507664263248,
+          "energy_in_trigger_std": 0.013369633816182613,
+          "ssim_vs_retrain_mean": 0.30435159659109506,
+          "ssim_vs_retrain_std": 0.18076160606730335,
+          "pearson_vs_retrain_mean": 0.42800118690037037,
+          "pearson_vs_retrain_std": 0.299162548665805,
+          "pearson_undefined_frac": 0.0,
+          "n_images": 200
+        }
+      }
+    },
+    "retrain": {
+      "mia": {
+        "attack_auc_mean": 0.4845909696527492,
+        "attack_auc_std": 0.011455289110998877,
+        "attack_acc_mean": 0.49033333333333334,
+        "attack_acc_std": 0.011756794725698955,
+        "n_splits": 5,
+        "threshold_auc_loss": 0.49898333333333333,
+        "n_members": 600,
+        "n_nonmembers": 600,
+        "n_classes_used": 2
+      },
+      "distance": {
+        "l2_param_to_retrain": 0.0,
+        "mean_kl_retrain_to_model": 0.0
+      },
+      "gradcam": {
+        "forget_train_trig": {
+          "energy_in_trigger_mean": 0.04773585498332977,
+          "energy_in_trigger_std": 0.0752323567867279,
+          "ssim_vs_retrain_mean": 1.0,
+          "ssim_vs_retrain_std": 0.0,
+          "pearson_vs_retrain_mean": 1.0,
+          "pearson_vs_retrain_std": 0.0,
+          "pearson_undefined_frac": 0.0,
+          "n_images": 200
+        },
+        "trigger_test": {
+          "energy_in_trigger_mean": 0.03200475126504898,
+          "energy_in_trigger_std": 0.044838905334472656,
+          "ssim_vs_retrain_mean": 1.0,
+          "ssim_vs_retrain_std": 0.0,
+          "pearson_vs_retrain_mean": 1.0,
+          "pearson_vs_retrain_std": 0.0,
+          "pearson_undefined_frac": 0.0,
+          "n_images": 200
+        },
+        "retained_test": {
+          "energy_in_trigger_mean": 0.020048178732395172,
+          "energy_in_trigger_std": 0.03036288544535637,
+          "ssim_vs_retrain_mean": 1.0,
+          "ssim_vs_retrain_std": 0.0,
+          "pearson_vs_retrain_mean": 1.0,
+          "pearson_vs_retrain_std": 0.0,
+          "pearson_undefined_frac": 0.0,
+          "n_images": 200
+        },
+        "forget_heldout_clean": {
+          "energy_in_trigger_mean": 0.012267053127288818,
+          "energy_in_trigger_std": 0.014742756262421608,
+          "ssim_vs_retrain_mean": 1.0,
+          "ssim_vs_retrain_std": 0.0,
+          "pearson_vs_retrain_mean": 1.0,
+          "pearson_vs_retrain_std": 0.0,
+          "pearson_undefined_frac": 0.0,
+          "n_images": 200
+        }
+      }
+    },
+    "fedosd_hard": {
+      "mia": {
+        "attack_auc_mean": 0.49685108829604285,
+        "attack_auc_std": 0.008727012765164383,
+        "attack_acc_mean": 0.4963333333333333,
+        "attack_acc_std": 0.006271629240742249,
+        "n_splits": 5,
+        "threshold_auc_loss": 0.5138777777777778,
+        "n_members": 600,
+        "n_nonmembers": 600,
+        "n_classes_used": 2
+      },
+      "distance": {
+        "l2_param_to_retrain": 7.243376515287646,
+        "mean_kl_retrain_to_model": 0.7816065480614383
+      },
+      "gradcam": {
+        "forget_train_trig": {
+          "energy_in_trigger_mean": 0.5603266954421997,
+          "energy_in_trigger_std": 0.3965968191623688,
+          "ssim_vs_retrain_mean": 0.3222646085319817,
+          "ssim_vs_retrain_std": 0.22551393862570196,
+          "pearson_vs_retrain_mean": 0.2561596001073899,
+          "pearson_vs_retrain_std": 0.2658344387452367,
+          "pearson_undefined_frac": 0.22,
+          "n_images": 200
+        },
+        "trigger_test": {
+          "energy_in_trigger_mean": 0.34721070528030396,
+          "energy_in_trigger_std": 0.3870401382446289,
+          "ssim_vs_retrain_mean": 0.31235020694773036,
+          "ssim_vs_retrain_std": 0.21973454948732285,
+          "pearson_vs_retrain_mean": 0.29263866711203185,
+          "pearson_vs_retrain_std": 0.29127310224256303,
+          "pearson_undefined_frac": 0.1,
+          "n_images": 200
+        },
+        "retained_test": {
+          "energy_in_trigger_mean": 0.018387500196695328,
+          "energy_in_trigger_std": 0.019811395555734634,
+          "ssim_vs_retrain_mean": 0.273736890962409,
+          "ssim_vs_retrain_std": 0.18281805346691338,
+          "pearson_vs_retrain_mean": 0.44942233955971916,
+          "pearson_vs_retrain_std": 0.3061364565045565,
+          "pearson_undefined_frac": 0.005,
+          "n_images": 200
+        },
+        "forget_heldout_clean": {
+          "energy_in_trigger_mean": 0.008499722927808762,
+          "energy_in_trigger_std": 0.010847318917512894,
+          "ssim_vs_retrain_mean": 0.28311797460910276,
+          "ssim_vs_retrain_std": 0.17153737906805744,
+          "pearson_vs_retrain_mean": 0.4330088559186258,
+          "pearson_vs_retrain_std": 0.2741113781390154,
+          "pearson_undefined_frac": 0.0,
+          "n_images": 200
+        }
+      }
+    },
+    "soft_fedosd": {
+      "mia": {
+        "attack_auc_mean": 0.4986111051110444,
+        "attack_auc_std": 0.00900030276976308,
+        "attack_acc_mean": 0.49800000000000005,
+        "attack_acc_std": 0.003858612300930072,
+        "n_splits": 5,
+        "threshold_auc_loss": 0.5140972222222222,
+        "n_members": 600,
+        "n_nonmembers": 600,
+        "n_classes_used": 2
+      },
+      "distance": {
+        "l2_param_to_retrain": 7.2438355666178165,
+        "mean_kl_retrain_to_model": 0.800580061691548
+      },
+      "gradcam": {
+        "forget_train_trig": {
+          "energy_in_trigger_mean": 0.5696679353713989,
+          "energy_in_trigger_std": 0.3975340723991394,
+          "ssim_vs_retrain_mean": 0.3224450510407468,
+          "ssim_vs_retrain_std": 0.22589881945173698,
+          "pearson_vs_retrain_mean": 0.2524298243774108,
+          "pearson_vs_retrain_std": 0.26407956690412887,
+          "pearson_undefined_frac": 0.21,
+          "n_images": 200
+        },
+        "trigger_test": {
+          "energy_in_trigger_mean": 0.35376158356666565,
+          "energy_in_trigger_std": 0.38857927918434143,
+          "ssim_vs_retrain_mean": 0.31368711175721675,
+          "ssim_vs_retrain_std": 0.21986202622443551,
+          "pearson_vs_retrain_mean": 0.2929673130882308,
+          "pearson_vs_retrain_std": 0.29154308269856827,
+          "pearson_undefined_frac": 0.095,
+          "n_images": 200
+        },
+        "retained_test": {
+          "energy_in_trigger_mean": 0.018212417140603065,
+          "energy_in_trigger_std": 0.019531583413481712,
+          "ssim_vs_retrain_mean": 0.2731589604607182,
+          "ssim_vs_retrain_std": 0.18160131838845164,
+          "pearson_vs_retrain_mean": 0.4481652694999143,
+          "pearson_vs_retrain_std": 0.3091587208721198,
+          "pearson_undefined_frac": 0.005,
+          "n_images": 200
+        },
+        "forget_heldout_clean": {
+          "energy_in_trigger_mean": 0.008457659743726254,
+          "energy_in_trigger_std": 0.010931423865258694,
+          "ssim_vs_retrain_mean": 0.2840541605917167,
+          "ssim_vs_retrain_std": 0.1717421017116675,
+          "pearson_vs_retrain_mean": 0.4325088846612571,
+          "pearson_vs_retrain_std": 0.27486795713816864,
+          "pearson_undefined_frac": 0.0,
+          "n_images": 200
+        }
+      }
+    },
+    "plain_ga": {
+      "mia": {
+        "attack_auc_mean": 0.5254557750147841,
+        "attack_auc_std": 0.011246775226933733,
+        "attack_acc_mean": 0.5173333333333334,
+        "attack_acc_std": 0.01200000000000001,
+        "n_splits": 5,
+        "threshold_auc_loss": 0.5269472222222222,
+        "n_members": 600,
+        "n_nonmembers": 600,
+        "n_classes_used": 2
+      },
+      "distance": {
+        "l2_param_to_retrain": 7.252075837073629,
+        "mean_kl_retrain_to_model": 1.5728384161408104
+      },
+      "gradcam": {
+        "forget_train_trig": {
+          "energy_in_trigger_mean": 0.5093204379081726,
+          "energy_in_trigger_std": 0.41670292615890503,
+          "ssim_vs_retrain_mean": 0.3163792135594352,
+          "ssim_vs_retrain_std": 0.22597680819431126,
+          "pearson_vs_retrain_mean": 0.19270607544107834,
+          "pearson_vs_retrain_std": 0.25260139653441094,
+          "pearson_undefined_frac": 0.24,
+          "n_images": 200
+        },
+        "trigger_test": {
+          "energy_in_trigger_mean": 0.3459191620349884,
+          "energy_in_trigger_std": 0.3845771551132202,
+          "ssim_vs_retrain_mean": 0.2966054622878769,
+          "ssim_vs_retrain_std": 0.22800910854025436,
+          "pearson_vs_retrain_mean": 0.23917222311511552,
+          "pearson_vs_retrain_std": 0.2864639074107052,
+          "pearson_undefined_frac": 0.135,
+          "n_images": 200
+        },
+        "retained_test": {
+          "energy_in_trigger_mean": 0.01856345497071743,
+          "energy_in_trigger_std": 0.021387021988630295,
+          "ssim_vs_retrain_mean": 0.2806772735102858,
+          "ssim_vs_retrain_std": 0.1812379835915548,
+          "pearson_vs_retrain_mean": 0.4381278647794084,
+          "pearson_vs_retrain_std": 0.31040006380724344,
+          "pearson_undefined_frac": 0.005,
+          "n_images": 200
+        },
+        "forget_heldout_clean": {
+          "energy_in_trigger_mean": 0.007866685278713703,
+          "energy_in_trigger_std": 0.011298377998173237,
+          "ssim_vs_retrain_mean": 0.2673721918723708,
+          "ssim_vs_retrain_std": 0.17639160806849682,
+          "pearson_vs_retrain_mean": 0.34741503237463744,
+          "pearson_vs_retrain_std": 0.3024845154265582,
+          "pearson_undefined_frac": 0.005,
+          "n_images": 200
+        }
+      }
+    },
+    "posttrain_plain": {
+      "mia": {
+        "attack_auc_mean": 0.48827103402383487,
+        "attack_auc_std": 0.010197301827856727,
+        "attack_acc_mean": 0.4966666666666667,
+        "attack_acc_std": 0.018318175552045447,
+        "n_splits": 5,
+        "threshold_auc_loss": 0.5099111111111111,
+        "n_members": 600,
+        "n_nonmembers": 600,
+        "n_classes_used": 2
+      },
+      "distance": {
+        "l2_param_to_retrain": 7.230997481302722,
+        "mean_kl_retrain_to_model": 0.5123383320662677
+      },
+      "gradcam": {
+        "forget_train_trig": {
+          "energy_in_trigger_mean": 0.5397641062736511,
+          "energy_in_trigger_std": 0.3499096632003784,
+          "ssim_vs_retrain_mean": 0.3188197895935978,
+          "ssim_vs_retrain_std": 0.2197789330275151,
+          "pearson_vs_retrain_mean": 0.23812478884700292,
+          "pearson_vs_retrain_std": 0.2673556299169817,
+          "pearson_undefined_frac": 0.055,
+          "n_images": 200
+        },
+        "trigger_test": {
+          "energy_in_trigger_mean": 0.33983078598976135,
+          "energy_in_trigger_std": 0.34686610102653503,
+          "ssim_vs_retrain_mean": 0.3099249865254146,
+          "ssim_vs_retrain_std": 0.20603545534098605,
+          "pearson_vs_retrain_mean": 0.29126149377587496,
+          "pearson_vs_retrain_std": 0.27807253441098306,
+          "pearson_undefined_frac": 0.035,
+          "n_images": 200
+        },
+        "retained_test": {
+          "energy_in_trigger_mean": 0.020168855786323547,
+          "energy_in_trigger_std": 0.026583658531308174,
+          "ssim_vs_retrain_mean": 0.2820720726588257,
+          "ssim_vs_retrain_std": 0.18787304114736614,
+          "pearson_vs_retrain_mean": 0.4569415815263262,
+          "pearson_vs_retrain_std": 0.29913079386987157,
+          "pearson_undefined_frac": 0.005,
+          "n_images": 200
+        },
+        "forget_heldout_clean": {
+          "energy_in_trigger_mean": 0.009605404920876026,
+          "energy_in_trigger_std": 0.012444454245269299,
+          "ssim_vs_retrain_mean": 0.29263498530403304,
+          "ssim_vs_retrain_std": 0.18046911394716691,
+          "pearson_vs_retrain_mean": 0.44348935364465963,
+          "pearson_vs_retrain_std": 0.28455527688734916,
+          "pearson_undefined_frac": 0.0,
+          "n_images": 200
+        }
+      }
+    },
+    "posttrain_proj": {
+      "mia": {
+        "attack_auc_mean": 0.4883310346411257,
+        "attack_auc_std": 0.010270416460491101,
+        "attack_acc_mean": 0.497,
+        "attack_acc_std": 0.01860107523773828,
+        "n_splits": 5,
+        "threshold_auc_loss": 0.5100305555555555,
+        "n_members": 600,
+        "n_nonmembers": 600,
+        "n_classes_used": 2
+      },
+      "distance": {
+        "l2_param_to_retrain": 7.23117696894454,
+        "mean_kl_retrain_to_model": 0.5128955614245674
+      },
+      "gradcam": {
+        "forget_train_trig": {
+          "energy_in_trigger_mean": 0.5394414663314819,
+          "energy_in_trigger_std": 0.3503001928329468,
+          "ssim_vs_retrain_mean": 0.31905125823350544,
+          "ssim_vs_retrain_std": 0.21975943195493927,
+          "pearson_vs_retrain_mean": 0.23820664558094093,
+          "pearson_vs_retrain_std": 0.26711803399327444,
+          "pearson_undefined_frac": 0.055,
+          "n_images": 200
+        },
+        "trigger_test": {
+          "energy_in_trigger_mean": 0.33834531903266907,
+          "energy_in_trigger_std": 0.3460542857646942,
+          "ssim_vs_retrain_mean": 0.31024121109781627,
+          "ssim_vs_retrain_std": 0.20617435849551732,
+          "pearson_vs_retrain_mean": 0.2928327496302686,
+          "pearson_vs_retrain_std": 0.27777316609426456,
+          "pearson_undefined_frac": 0.035,
+          "n_images": 200
+        },
+        "retained_test": {
+          "energy_in_trigger_mean": 0.020217234268784523,
+          "energy_in_trigger_std": 0.02677667886018753,
+          "ssim_vs_retrain_mean": 0.2821464660698125,
+          "ssim_vs_retrain_std": 0.18768144785692803,
+          "pearson_vs_retrain_mean": 0.4556060258035139,
+          "pearson_vs_retrain_std": 0.29989098619006205,
+          "pearson_undefined_frac": 0.005,
+          "n_images": 200
+        },
+        "forget_heldout_clean": {
+          "energy_in_trigger_mean": 0.009555128403007984,
+          "energy_in_trigger_std": 0.012343935668468475,
+          "ssim_vs_retrain_mean": 0.29345999641478854,
+          "ssim_vs_retrain_std": 0.18174151257097212,
+          "pearson_vs_retrain_mean": 0.4433358715600316,
+          "pearson_vs_retrain_std": 0.2846777026733751,
+          "pearson_undefined_frac": 0.0,
+          "n_images": 200
+        }
+      }
+    }
+  }
+}

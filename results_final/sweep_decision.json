@@ -1,0 +1,341 @@
+{
+  "tables": {
+    "pat_eta0.0_lam20": {
+      "101": {
+        "floor": 24.5,
+        "mean": 40.888888888888886,
+        "asr": 0.22,
+        "asr_round0": 94.48,
+        "forget_client": 7,
+        "problems": []
+      },
+      "102": {
+        "floor": 6.25,
+        "mean": 43.388888888888886,
+        "asr": 0.28,
+        "asr_round0": 94.7,
+        "forget_client": 8,
+        "problems": []
+      },
+      "103": {
+        "floor": 18.25,
+        "mean": 40.388888888888886,
+        "asr": 0.0,
+        "asr_round0": 92.28,
+        "forget_client": 6,
+        "problems": []
+      }
+    },
+    "pat_eta0.4_lam20": {
+      "101": {
+        "floor": 24.5,
+        "mean": 41.0,
+        "asr": 0.22,
+        "asr_round0": 94.48,
+        "forget_client": 7,
+        "problems": []
+      },
+      "102": {
+        "floor": 8.75,
+        "mean": 43.388888888888886,
+        "asr": 0.28,
+        "asr_round0": 94.7,
+        "forget_client": 8,
+        "problems": []
+      },
+      "103": {
+        "floor": 19.75,
+        "mean": 40.361111111111114,
+        "asr": 0.0,
+        "asr_round0": 92.28,
+        "forget_client": 6,
+        "problems": []
+      }
+    },
+    "pat_eta1.0_lam20": {
+      "101": {
+        "floor": 24.75,
+        "mean": 40.80555555555556,
+        "asr": 0.22,
+        "asr_round0": 94.48,
+        "forget_client": 7,
+        "problems": []
+      },
+      "102": {
+        "floor": 10.5,
+        "mean": 43.166666666666664,
+        "asr": 0.26,
+        "asr_round0": 94.7,
+        "forget_client": 8,
+        "problems": []
+      },
+      "103": {
+        "floor": 21.75,
+        "mean": 40.083333333333336,
+        "asr": 0.0,
+        "asr_round0": 92.28,
+        "forget_client": 6,
+        "problems": []
+      }
+    },
+    "dir0.5_eta0.0_lam20": {
+      "101": {
+        "floor": 56.0,
+        "mean": 62.268518518518526,
+        "asr": 0.18044027426921688,
+        "asr_round0": 84.31974016600505,
+        "forget_client": 7,
+        "problems": []
+      },
+      "102": {
+        "floor": 56.0,
+        "mean": 62.407407407407405,
+        "asr": 0.4161712247324614,
+        "asr_round0": 75.76298057867618,
+        "forget_client": 8,
+        "problems": []
+      },
+      "103": {
+        "floor": 60.833333333333336,
+        "mean": 64.53703703703702,
+        "asr": 1.0856453558504222,
+        "asr_round0": 73.65500603136309,
+        "forget_client": 6,
+        "problems": []
+      }
+    },
+    "dir0.5_eta0.4_lam20": {
+      "101": {
+        "floor": 56.25,
+        "mean": 62.34259259259258,
+        "asr": 0.19848430169613857,
+        "asr_round0": 84.31974016600505,
+        "forget_client": 7,
+        "problems": []
+      },
+      "102": {
+        "floor": 56.166666666666664,
+        "mean": 62.44444444444444,
+        "asr": 0.4161712247324614,
+        "asr_round0": 75.76298057867618,
+        "forget_client": 8,
+        "problems": []
+      },
+      "103": {
+        "floor": 60.666666666666664,
+        "mean": 64.48148148148148,
+        "asr": 1.037394451145959,
+        "asr_round0": 73.65500603136309,
+        "forget_client": 6,
+        "problems": []
+      }
+    },
+    "dir0.5_eta1.0_lam20": {
+      "101": {
+        "floor": 56.25,
+        "mean": 62.35185185185185,
+        "asr": 0.19848430169613857,
+        "asr_round0": 84.31974016600505,
+        "forget_client": 7,
+        "problems": []
+      },
+      "102": {
+        "floor": 56.166666666666664,
+        "mean": 62.57407407407407,
+        "asr": 0.4161712247324614,
+        "asr_round0": 75.76298057867618,
+        "forget_client": 8,
+        "problems": []
+      },
+      "103": {
+        "floor": 60.666666666666664,
+        "mean": 64.43518518518518,
+        "asr": 1.037394451145959,
+        "asr_round0": 73.65500603136309,
+        "forget_client": 6,
+        "problems": []
+      }
+    },
+    "dir0.1_eta0.0_lam20": {
+      "101": {
+        "floor": 25.833333333333332,
+        "mean": 53.625,
+        "asr": 1.341736125228705,
+        "asr_round0": 88.61557227078674,
+        "forget_client": 7,
+        "problems": []
+      },
+      "102": {
+        "floor": 14.5,
+        "mean": 47.34259259259259,
+        "asr": 0.23316062176165803,
+        "asr_round0": 96.81347150259067,
+        "forget_client": 8,
+        "problems": []
+      },
+      "103": {
+        "floor": 27.666666666666668,
+        "mean": 52.4537037037037,
+        "asr": 1.7861339600470034,
+        "asr_round0": 91.35135135135135,
+        "forget_client": 6,
+        "problems": []
+      }
+    },
+    "dir0.1_eta0.4_lam20": {
+      "101": {
+        "floor": 26.666666666666668,
+        "mean": 53.675925925925924,
+        "asr": 1.2400894490750152,
+        "asr_round0": 88.61557227078674,
+        "forget_client": 7,
+        "problems": []
+      },
+      "102": {
+        "floor": 16.166666666666668,
+        "mean": 47.02777777777778,
+        "asr": 0.20725388601036268,
+        "asr_round0": 96.81347150259067,
+        "forget_client": 8,
+        "problems": []
+      },
+      "103": {
+        "floor": 29.166666666666668,
+        "mean": 52.504629629629626,
+        "asr": 1.7391304347826086,
+        "asr_round0": 91.35135135135135,
+        "forget_client": 6,
+        "problems": []
+      }
+    },
+    "dir0.1_eta1.0_lam20": {
+      "101": {
+        "floor": 27.5,
+        "mean": 53.71296296296296,
+        "asr": 1.1994307786135394,
+        "asr_round0": 88.61557227078674,
+        "forget_client": 7,
+        "problems": []
+      },
+      "102": {
+        "floor": 17.666666666666668,
+        "mean": 46.657407407407405,
+        "asr": 0.16839378238341968,
+        "asr_round0": 96.81347150259067,
+        "forget_client": 8,
+        "problems": []
+      },
+      "103": {
+        "floor": 29.666666666666668,
+        "mean": 52.59722222222222,
+        "asr": 1.645123384253819,
+        "asr_round0": 91.35135135135135,
+        "forget_client": 6,
+        "problems": []
+      }
+    },
+    "pat_eta0.0_lam5.0": {
+      "101": {
+        "floor": 19.75,
+        "mean": 36.97222222222222,
+        "asr": 0.2,
+        "asr_round0": 94.48,
+        "forget_client": 7,
+        "problems": []
+      },
+      "102": {
+        "floor": 3.0,
+        "mean": 39.416666666666664,
+        "asr": 0.14,
+        "asr_round0": 94.7,
+        "forget_client": 8,
+        "problems": []
+      },
+      "103": {
+        "floor": 11.5,
+        "mean": 37.388888888888886,
+        "asr": 0.0,
+        "asr_round0": 92.28,
+        "forget_client": 6,
+        "problems": []
+      }
+    },
+    "pat_eta0.0_lam20.0": {
+      "101": {
+        "floor": 24.5,
+        "mean": 40.888888888888886,
+        "asr": 0.22,
+        "asr_round0": 94.48,
+        "forget_client": 7,
+        "problems": []
+      },
+      "102": {
+        "floor": 6.25,
+        "mean": 43.388888888888886,
+        "asr": 0.28,
+        "asr_round0": 94.7,
+        "forget_client": 8,
+        "problems": []
+      },
+      "103": {
+        "floor": 18.25,
+        "mean": 40.388888888888886,
+        "asr": 0.0,
+        "asr_round0": 92.28,
+        "forget_client": 6,
+        "problems": []
+      }
+    },
+    "pat_eta0.0_lam100.0": {
+      "101": {
+        "floor": 25.25,
+        "mean": 42.94444444444444,
+        "asr": 0.26,
+        "asr_round0": 94.48,
+        "forget_client": 7,
+        "problems": []
+      },
+      "102": {
+        "floor": 8.0,
+        "mean": 45.111111111111114,
+        "asr": 0.42,
+        "asr_round0": 94.7,
+        "forget_client": 8,
+        "problems": []
+      },
+      "103": {
+        "floor": 21.75,
+        "mean": 41.52777777777778,
+        "asr": 0.0,
+        "asr_round0": 92.28,
+        "forget_client": 6,
+        "problems": []
+      }
+    }
+  },
+  "eta_star": 1.0,
+  "G": {
+    "pat": 2.6666666666666665,
+    "dir0.5": 0.08333333333333097,
+    "dir0.1": 2.2777777777777786
+  },
+  "verdict": "UNIFORM soft FedOSD (eta=0) is the main method",
+  "adaptive_main": false,
+  "lambda_star": 100.0,
+  "lambda_rows": {
+    "5.0": {
+      "mean": 37.925925925925924,
+      "eligible": true
+    },
+    "20.0": {
+      "mean": 41.55555555555555,
+      "eligible": true
+    },
+    "100.0": {
+      "mean": 43.19444444444445,
+      "eligible": true
+    }
+  },
+  "problems": [],
+  "rule": "PREREG_SOFT_HETEROGENEITY.md (+ Amendment A); validation split only"
+}
