@@ -152,7 +152,8 @@ def build_ui(demo: Demo):
         outs = [im_o, im_s, im_r, label_md, preds, metrics, curve]
         for c in (model_dd, group_dd, slider):
             c.change(demo.render, [model_dd, group_dd, slider], outs)
-        forget.click(lambda: (forgotten, "Forget request for client 0 applied: "
+        fc = getattr(demo.api, "META", {}).get("forget_client", "?")
+        forget.click(lambda: (forgotten, f"Forget request for client {fc} applied (precomputed unlearned model): "
                               f"showing **{MODEL_LABELS.get(forgotten, forgotten)}**."),
                      None, [model_dd, status])
         ui.load(demo.render, [model_dd, group_dd, slider], outs)
