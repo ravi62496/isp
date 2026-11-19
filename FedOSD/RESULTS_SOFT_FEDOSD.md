@@ -141,7 +141,7 @@ Backdoor ASR on held-out triggered test images during relearning (mean +/- std, 
   running). On the tuning seeds 101-103, a grid of attacks (n in {8, 16, 32} images x lr in
   {0.001, 0.003, 0.01}, 100 steps) was run on retrain. The rule required retrain's ASR after
   100 steps to stay <= 20%. Even the weakest attack (8 images, lr 0.001) installed the backdoor
-  in retrain to 59.7% (original model: 91.8%); stronger ones reached 68-93%. No attack was
+  in retrain to 59.7% (original model: 91.8%); stronger ones reached 68-95%. No attack was
   eligible, so, as pre-registered, none was run on the final seeds.
 - **Conclusion:** the 4x4 patch backdoor is learnable from scratch from a handful of images.
   Relearning speed therefore cannot separate "forgot the backdoor" from "never learned it" in
