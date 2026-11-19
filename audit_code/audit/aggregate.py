@@ -48,6 +48,7 @@ def main():
     ap.add_argument('--audits', default='../results_final')
     ap.add_argument('--fedosd', default='../FedOSD')
     ap.add_argument('--device', default='auto')
+    ap.add_argument('--ablation', default=None, help='"lam:eta" of the adaptive run, e.g. 100.0:1.0')
     a = ap.parse_args()
     device = pick_device(a.device)
     vals = defaultdict(lambda: defaultdict(list))  # model -> metric -> [per seed]
@@ -70,6 +71,8 @@ def main():
         with open(os.path.join(a.audits, f'seed{s}', 'audit_table.csv')) as f:
             for row in csv.DictReader(f):
                 for k, x in row.items():
+                    if k == 'model':
+                        continue
                     try:
                         vals[row['model']][k].append(float(x))
                     except (TypeError, ValueError):
@@ -93,6 +96,28 @@ def main():
         lines.append(f'| {MODEL_LABELS.get(m, m)} | ' + ' | '.join(
             f'{summary[m][k][0]:.2f} +/- {summary[m][k][1]:.2f}' for k in head) + ' |')
     lines += ['', 'All metrics (including MIA / distance / Grad-CAM): final_summary.csv']
+    if a.ablation:  # uniform vs adaptive soft FedOSD, from the run logs (TEST halves, final seeds)
+        lam, eta = a.ablation.split(':')
+        stem = os.path.join(a.fedosd, 'UnlearningTask_patch4', 'CNN_CIFAR10', 'cifar10 pat balanced B200 NC2 N10',
+                            'UN1', 'E1', 'C1.0', 'FedOSD', 'seed{s} N10 C1.0 FedOSD CNN_CIFAR10 E1 lr0.0004 '
+                            'decay0.999 g_clip-1.0 proj_two_sided wm_{wm} lam{lam} eta{eta} rlr0.0001{suf}.json')
+        lines += ['', f'Ablation: soft FedOSD weighting (lambda={lam}), retained TEST accuracy from run logs', '',
+                  '| Variant | stage | mean | floor |', '|---|---|---|---|']
+        for wm, e in (('uniform', '0.0'), ('deficit', eta)):
+            for stage, suf in (('after unlearning', '_unlearn'), ('after post-training', '')):
+                mean, flo = [], []
+                for s in a.seeds:
+                    p = stem.format(s=s, wm=wm, lam=lam, eta=e, suf=suf)
+                    if not os.path.exists(p):
+                        continue
+                    d = json.load(open(p))
+                    fc = d['params']['unlearn_client_id_list'][0]
+                    v = [h['test_accuracy'][-1] for c, h in enumerate(d['metric_log']['client_metric_history'])
+                         if c != fc and h.get('test_accuracy')]
+                    mean.append(np.mean(v)); flo.append(np.min(v))
+                if mean:
+                    lines.append(f'| eta={e} ({wm}) | {stage} | {np.mean(mean):.2f} +/- {np.std(mean):.2f} | '
+                                 f'{np.mean(flo):.2f} +/- {np.std(flo):.2f} (n={len(flo)}) |')
     open(os.path.join(a.audits, 'final_table.md'), 'w').write('\n'.join(lines) + '\n')
     print('\n'.join(lines))
     print('\n' + open(os.path.join(a.audits, 'final_summary.csv')).read())
