@@ -116,7 +116,46 @@ Definitions:
 
 Protocol in `audit_code/audit/relearn.py`, fixed before any relearning result was produced.
 An attacker fine-tunes each model with plain SGD (lr 0.01, 100 full-batch steps) on 32 of the
-forget client's triggered images, and we track backdoor ASR. *Results pending.*
+forget client's triggered images, and we track backdoor ASR.
+
+Backdoor ASR on held-out triggered test images during relearning (mean +/- std, seeds 31-33):
+
+| Model | ASR at step 0 | ASR at step 10 | ASR at step 100 | steps to 50% (per seed) |
+|---|---|---|---|---|
+| Original | 84.3 | 97.57 +/- 0.87 | 99.68 +/- 0.19 | 0, 0, 0 |
+| Retrain (gold) | 4.6 | **91.67 +/- 3.07** | **95.83 +/- 2.66** | 1, 1, 1 |
+| FedOSD (hard) | 1.8 | 99.12 +/- 0.70 | 100.00 +/- 0.00 | 1, 2, 2 |
+| Soft FedOSD (ours) | 1.8 | 99.01 +/- 0.75 | 100.00 +/- 0.00 | 1, 2, 2 |
+| Plain GA | 0.3 | 97.09 +/- 1.12 | 99.94 +/- 0.05 | 1, 2, 3 |
+| E3 post-train, plain | 6.6 | 99.51 +/- 0.33 | 100.00 +/- 0.00 | 1, 1, 1 |
+| E4 post-train, projected | 6.4 | 99.54 +/- 0.31 | 100.00 +/- 0.00 | 1, 1, 1 |
+
+- **The attack saturates.** It installs the backdoor even in retrain, which never saw the
+  trigger, within 1 step. So "steps to 50%" cannot separate the methods.
+- **A small but consistent residual remains.** On every seed, every unlearned model relearns
+  faster and further than retrain (step 10: retrain 87.3 / 93.9 / 93.7% against FedOSD hard
+  98.2 / 99.9 / 99.3%). This agrees with the Grad-CAM finding (section 4, item 7): the behaviour
+  is removed but some trigger sensitivity is not.
+- E3 vs E4 again show no difference.
+- A weaker attack (fewer images or a smaller lr) would separate the methods better. It was not
+  run, because choosing the attack strength after seeing final-seed results would be tuning on
+  the test seeds. It is a candidate for future work, to be fixed on the tuning seeds.
+
+### Ablation: adaptive weighting on the final seeds
+
+Retained test accuracy from the run logs, lambda = 100, seeds 31-33:
+
+| Variant | stage | mean | floor |
+|---|---|---|---|
+| eta = 0 (uniform, main) | after unlearning | 42.17 +/- 1.05 | 23.17 +/- 3.42 |
+| eta = 1 (adaptive) | after unlearning | 42.12 +/- 1.02 | 23.56 +/- 3.35 |
+| eta = 0 (uniform, main) | after post-training | 51.51 +/- 0.47 | 33.39 +/- 1.81 |
+| eta = 1 (adaptive) | after post-training | 51.51 +/- 0.47 | 33.44 +/- 1.85 |
+
+The +2-3 pp floor gain seen on the tuning seeds (at lambda = 20) does not appear at the final
+lambda = 100 (+0.4 pp after unlearning, 0 after post-training). This fits finding 2: at large
+lambda the soft solve approaches the hard projection, which leaves little room for the client
+weights to matter.
 
 ## 6. Deviations and disclosures
 
