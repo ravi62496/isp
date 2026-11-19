@@ -88,12 +88,13 @@ class Demo:
         if key not in self._pools:
             X, y = self.api.get_set(key)
             idx = gradcam.pick_indices(y.cpu().numpy(), N_POOL, self.seed)
-            self._pools[key] = (X[idx], y[idx])
+            true = self.api.get_set('forget_train_clean')[1][idx] if key == 'forget_train_trig' else None
+            self._pools[key] = (X[idx], y[idx], true)
         return self._pools[key]
 
     def render(self, model_name: str, group: str, i: float):
         with self.lock:
-            X, y = self.pool(GROUPS[group])
+            X, y, true = self.pool(GROUPS[group])
             i = int(min(i, len(X) - 1))
             x, t = X[i:i + 1], y[i:i + 1]
             img = gradcam.to_hwc(self.api, x)[0]
@@ -109,7 +110,14 @@ class Demo:
                 preds.append([MODEL_LABELS.get(m, m), cname(k), f"{float(p[k]):.3f}"])
         keys = [k for k in dict.fromkeys(k for m in shown for k in self.flat.get(m, {}))]
         table = [[k] + [fmt(self.flat.get(m, {}).get(k)) for m in shown] for k in keys]
-        label = f"**Label / Grad-CAM target for this image:** {cname(int(t))}"
+        if GROUPS[group] == 'forget_train_trig':
+            label = (f"**True class:** {cname(int(true[i]))}  |  **Backdoor label (Grad-CAM target):** "
+                     f"{cname(int(t))}. The patch at the bottom right is the trigger.")
+        elif GROUPS[group] == 'trigger_test':
+            label = (f"**Backdoor label (Grad-CAM target):** {cname(int(t))}. The true class is a different "
+                     "class (images of the target class are excluded).")
+        else:
+            label = f"**True class / Grad-CAM target:** {cname(int(t))}"
         return ims[0], ims[1], ims[2], label, preds, table, relearn_figure(self.relearn, model_name)
 
 
