@@ -132,8 +132,8 @@ Backdoor ASR on held-out triggered test images during relearning (mean +/- std, 
 
 - **The attack saturates.** It installs the backdoor even in retrain, which never saw the
   trigger, within 1 step. So "steps to 50%" cannot separate the methods.
-- **A small but consistent residual remains.** On every seed, every unlearned model relearns
-  faster and further than retrain (step 10: retrain 87.3 / 93.9 / 93.7% against FedOSD hard
+- **A small but consistent residual remains.** On every seed, every unlearned model starts slower than
+  retrain (step 1: about 40% vs 78%) but overtakes it by about step 5 and ends higher (step 10: retrain 87.3 / 93.9 / 93.7% against FedOSD hard
   98.2 / 99.9 / 99.3%). This agrees with the Grad-CAM finding (section 4, item 7): the behaviour
   is removed but some trigger sensitivity is not.
 - E3 vs E4 again show no difference.
