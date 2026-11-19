@@ -1,4 +1,4 @@
-# Federated Unlearning Conflict Mitigation (ISP Project Workspace)
+# Federated Unlearning for Vision Models with Auditing & Visualization
 
 ## Final project: Federated Unlearning for Vision Models with Auditing & Visualization
 
@@ -72,61 +72,17 @@ python -m demo.app --bundle ../bundles/seed31 --results ../results_final/seed31 
 **Deviations from the brief:**
 - CIFAR-10 instead of the suggested CelebA or CIFAR-100, and a small CNN instead of ResNet-18,
   both to fit the compute budget.
-- The earlier exploratory results further down this README used a trigger that was later
-  found never to be learned; see the correction note in [FedOSD/README.md](FedOSD/README.md).
+- An earlier exploratory study in this repository used a trigger that was later found never
+  to be learned. It was removed to keep the repository focused, and is kept in git under the
+  tag `legacy-stage4`.
 
----
+## Repository map
 
-### Earlier work in this repository
-
-This repository contains the complete experimental code, statistical evaluators, pre-registration protocols, and publication-grade artifacts for the empirical evaluation of federated unlearning conflict mitigation algorithms (based on Pan et al., AAAI-25).
-
-The primary research codebase, detailed documentation, and experimental results are located in the [`FedOSD/`](FedOSD/) directory.
-
----
-
-## Quick Navigation
-
-- **Primary Comprehensive Documentation**: [FedOSD/README.md](FedOSD/README.md)
-- **Pre-Registration Criteria**: [FedOSD/SUCCESS_CRITERIA_v5.1.md](FedOSD/SUCCESS_CRITERIA_v5.1.md)
-- **Frozen Environment Specifications**: [FedOSD/FROZEN_CONFIGS_v5.md](FedOSD/FROZEN_CONFIGS_v5.md)
-- **Amendment 1 Disclosure**: [FedOSD/AMENDMENT_1.md](FedOSD/AMENDMENT_1.md)
-- **Confirmation Result Tables**: [FedOSD/README_confirmation_tables.md](FedOSD/README_confirmation_tables.md)
-- **Publication Figures**: [FedOSD/figures/](FedOSD/figures/)
-- **Stage 4 Evaluation Outputs**: [FedOSD/results_confirm/](FedOSD/results_confirm/)
-
----
-
-## Workspace Structure
-
-- **`FedOSD/`**: The core research codebase containing the federated unlearning platform (`tfedplat`), evaluation scripts, plotting pipelines, and confirmatory experiment results.
-- **`seed999_laptop/`**: Independent reference run executed on a laptop environment for cross-platform calibration (Seed 999).
-- **`stage4_backup.zip`**: Complete archived backup of all raw JSON and CSV results from the Stage 4 confirmatory runs (Seeds 21–30).
-
----
-
-## Research Summary & Key Findings
-
-1. **Phase 1 (Exploratory Benchmarks & Goals 1–4)**:
-   - Formulated **Adaptive FedOSD** with closed-form Woodbury identity solve and dynamic deficit-driven weighting $w_i(t)$.
-   - Built a 300-DPI publication visualization suite (Figures 1–5 in [`FedOSD/figures/`](FedOSD/figures/)).
-   - Evaluated multi-client batch unlearning ($U_N=2$, Figure 6) and complex vision generalization on CIFAR-100 (Figure 7).
-2. **Phase 2 (Scientific Auditing & Gate A)**:
-   - Eliminated test feedback leakage artifact.
-   - Identified that $13.41$ percentage points (44.7%) of historical unlearning gaps were an artifact of learning rate disparities between pretraining ($0.01$) and retraining ($0.05$).
-   - Established primary matched **Regime R2** (Pretrain $0.05$, Retrain $0.05$, Recovery $10^{-4}$).
-   - Discovered $+33.8\%$ gradient step dilation in legacy code and formulated **One-Sided Unscaled FedOSD (cap 1.0)** via dual NNLS and hard-norm bounding.
-   - Calibrated a strength-matched baseline comparator (Arm A2, $s^* = 0.54$) to match parameter displacement within $1.1\%$.
-3. **Phase 3 (Pre-Registration Protocol)**:
-   - Codified strict pre-registration protocols (`SUCCESS_CRITERIA_v5.1.md`) and locked code at git tag `freeze-v5.1`.
-   - Documented Amendment 1 in `AMENDMENT_1.md` before viewing metrics.
-4. **Phase 4 (Confirmatory Trial on Seeds 21–30 - Final Outcome C)**:
-   - Ran 100 runs across 10 unseen seeds on GPU (11.8 hours).
-   - **Pre-Registered Confirmatory Family F1 (Round 100, Matched A3 vs A2)**:
-     - *Retained Cohort Mean Acc*: $+1.15\%$ ($47.89\%$ vs $46.75\%$, Holm $p = 0.0004$) $\to$ **Superior**.
-     - *Worst-Off Client Floor*: $-5.47\%$ ($19.93\%$ vs $25.40\%$, Holm $p = 0.0001$) $\to$ **Inferior**.
-     - *Max Collateral Drop*: $-3.37\%$ ($14.00\%$ vs $10.63\%$, Holm $p = 0.0245$) $\to$ **Inferior**.
-   - **Final Verdict: OUTCOME C (Trade-Off / Reject Floor Protection)**:
-     - Relaxing hard orthogonality provides a modest cohort mean boost ($+1.15$ pp), but **fundamentally fails to protect worst-off clients** in non-IID federated distributions, dropping the worst-off floor by $5.47$ pp. Standard hard projection remains strictly necessary for worst-case client protection.
-
-For full mathematical derivations, statistical tables, and runbooks, please see **[`FedOSD/README.md`](FedOSD/README.md)**.
+| Path | Contents |
+|---|---|
+| [FedOSD/](FedOSD/) | FL and unlearning code, run scripts, pre-registrations, results write-up |
+| [audit_code/](audit_code/) | Audits (MIA, Grad-CAM, distance, relearning, aggregation) and the Gradio demo |
+| [results_final/](results_final/) | Final results for seeds 31-33 (tables, audit outputs, Grad-CAM figures) |
+| [results_calib/](results_calib/) | Relearning-attack calibration on tuning seeds |
+| [notebooks/](notebooks/) | Results notebook |
+| [presentation/](presentation/) | Slides and the script that builds them |

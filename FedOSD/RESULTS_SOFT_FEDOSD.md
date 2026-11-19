@@ -169,8 +169,8 @@ weights to matter.
 
 - **Amendment A:** the legacy trigger was never learned (seed 999: the same backdoor-label
   rate with and without the trigger; held-out ASR 5.3%). It was replaced by the patch trigger.
-  **All earlier "ASR" numbers in this repo's README (Fig. 1, the CIFAR-100 table, the
-  multi-client table) measure label-flip memorisation, not a backdoor.**
+  **All "ASR" numbers of the earlier study (git tag `legacy-stage4`) therefore measure
+  label-flip memorisation, not a backdoor.**
 - **Amendment B:** the gate threshold was lowered from 90% to a causality test (ASR >= 60% and
   at least 50 pp above the no-trigger rate) **after seeing the gate values**, before any
   unlearning run. The gate also moved from the test halves to the validation halves.

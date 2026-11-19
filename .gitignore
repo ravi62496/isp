@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 bundles/
 ~$*
+FedOSD/logs_*/
+FedOSD/stage4_log.txt
+*.tar
