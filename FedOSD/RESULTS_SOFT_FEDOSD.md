@@ -137,9 +137,17 @@ Backdoor ASR on held-out triggered test images during relearning (mean +/- std, 
   98.2 / 99.9 / 99.3%). This agrees with the Grad-CAM finding (section 4, item 7): the behaviour
   is removed but some trigger sensitivity is not.
 - E3 vs E4 again show no difference.
-- A weaker attack (fewer images or a smaller lr) would separate the methods better. It was not
-  run, because choosing the attack strength after seeing final-seed results would be tuning on
-  the test seeds. It is a candidate for future work, to be fixed on the tuning seeds.
+- **A calibrated attack was tried and none qualified** (`PREREG_RELEARN.md`, rule fixed before
+  running). On the tuning seeds 101-103, a grid of attacks (n in {8, 16, 32} images x lr in
+  {0.001, 0.003, 0.01}, 100 steps) was run on retrain. The rule required retrain's ASR after
+  100 steps to stay <= 20%. Even the weakest attack (8 images, lr 0.001) installed the backdoor
+  in retrain to 59.7% (original model: 91.8%); stronger ones reached 68-93%. No attack was
+  eligible, so, as pre-registered, none was run on the final seeds.
+- **Conclusion:** the 4x4 patch backdoor is learnable from scratch from a handful of images.
+  Relearning speed therefore cannot separate "forgot the backdoor" from "never learned it" in
+  this setting. The small residual above is an observation, not evidence of incomplete
+  unlearning. A harder-to-learn trigger (for example a blended or low-contrast pattern) would be
+  needed for a discriminative relearning audit.
 
 ### Ablation: adaptive weighting on the final seeds
 
