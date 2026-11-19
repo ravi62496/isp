@@ -85,4 +85,4 @@ python -m demo.app --bundle ../bundles/seed31 --results ../results_final/seed31 
 | [results_final/](results_final/) | Final results for seeds 31-33 (tables, audit outputs, Grad-CAM figures) |
 | [results_calib/](results_calib/) | Relearning-attack calibration on tuning seeds |
 | [notebooks/](notebooks/) | Results notebook |
-| [presentation/](presentation/) | Slides and the script that builds them |
+| [presentation/](presentation/) | Slides |
