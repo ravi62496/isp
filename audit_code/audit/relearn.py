@@ -35,6 +35,7 @@ from audit import mia
 from audit.api import MODEL_NAMES, load_api, pick_device, seed_everything
 
 N_RELEARN, LR, STEPS, MIA_AT = 32, 0.01, 100, (0, 50, 100)
+TAG, FAST, ONLY = '', False, None  # set from CLI (calibration: see FedOSD/PREREG_RELEARN.md)
 
 
 @torch.no_grad()
@@ -54,9 +55,12 @@ def relearn_one(net, sets, Xr, yr, device):
             opt.zero_grad()
             F.cross_entropy(net(Xr), yr).backward()
             opt.step()
-        r = {'round': step, 'asr': acc(net, *sets['trigger_test'], device),
-             'forget_acc': acc(net, *sets['forget_train_clean'], device),
-             'clean_acc': acc(net, *sets['retained_test'], device), 'mia_auc': None}
+        r = {'round': step, 'asr': acc(net, *sets['trigger_test'], device), 'mia_auc': None}
+        if FAST:
+            rows.append(r)
+            continue
+        r['forget_acc'] = acc(net, *sets['forget_train_clean'], device)
+        r['clean_acc'] = acc(net, *sets['retained_test'], device)
         if step in MIA_AT:
             net.eval()
             r['mia_auc'] = mia.run_mia(net, sets['forget_train_clean'], sets['forget_heldout_clean'],
@@ -86,16 +90,16 @@ def run(bundle, out, device_name):
     Xr, yr = Xt[idx].to(device), yt[idx].to(device)
     rows = []
     for m in MODEL_NAMES:
-        if m not in meta['models']:
+        if m not in meta['models'] or (ONLY and m not in ONLY):
             continue
         print(f'[relearn] {m}', flush=True)
         torch.manual_seed(0)
         rows += [{'model': m, **r} for r in relearn_one(api.load_model(m), sets, Xr, yr, device)]
     os.makedirs(out, exist_ok=True)
-    json.dump(rows, open(os.path.join(out, 'relearn.json'), 'w'), indent=1)
+    json.dump(rows, open(os.path.join(out, f'relearn{TAG}.json'), 'w'), indent=1)
     s = summarize_rows(rows)
     json.dump({'protocol': {'n': N_RELEARN, 'lr': LR, 'steps': STEPS}, 'per_model': s},
-              open(os.path.join(out, 'relearn_summary.json'), 'w'), indent=2)
+              open(os.path.join(out, f'relearn_summary{TAG}.json'), 'w'), indent=2)
     for m, v in s.items():
         print(f'{m:16} ASR step0 {v["asr_0"]:6.2f}  step10 {v["asr_10"]:6.2f}  step{STEPS} {v["asr_end"]:6.2f}  '
               f'steps to 50%: {v["steps_to_50"]}')
@@ -104,7 +108,7 @@ def run(bundle, out, device_name):
 def summarize(root, seeds):
     per = {}
     for s in seeds:
-        for m, v in json.load(open(os.path.join(root, f'seed{s}', 'relearn_summary.json')))['per_model'].items():
+        for m, v in json.load(open(os.path.join(root, f'seed{s}', f'relearn_summary{TAG}.json')))['per_model'].items():
             per.setdefault(m, []).append(v)
     print(f'{"model":16} {"ASR@10":>16} {"ASR@100":>16}  steps_to_50 per seed')
     res = {}
@@ -113,17 +117,24 @@ def summarize(root, seeds):
         res[m] = {'asr_10': [float(np.mean(a5)), float(np.std(a5))], 'asr_end': [float(np.mean(a30)), float(np.std(a30))],
                   'steps_to_50': [v['steps_to_50'] for v in vs]}
         print(f'{m:16} {np.mean(a5):7.2f} +/- {np.std(a5):5.2f} {np.mean(a30):7.2f} +/- {np.std(a30):5.2f}  {res[m]["steps_to_50"]}')
-    json.dump({'seeds': seeds, 'per_model': res}, open(os.path.join(root, 'relearn_overall.json'), 'w'), indent=2)
+    json.dump({'seeds': seeds, 'per_model': res}, open(os.path.join(root, f'relearn_overall{TAG}.json'), 'w'), indent=2)
 
 
 def main():
+    global N_RELEARN, LR, TAG, FAST, ONLY
     ap = argparse.ArgumentParser()
     ap.add_argument('--bundle')
     ap.add_argument('--out')
     ap.add_argument('--device', default='auto')
     ap.add_argument('--summarize', help='results root containing seed<s>/relearn_summary.json')
     ap.add_argument('--seeds', type=int, nargs='+', default=[31, 32, 33])
+    ap.add_argument('--n', type=int, default=N_RELEARN)
+    ap.add_argument('--lr', type=float, default=LR)
+    ap.add_argument('--tag', default='', help='suffix for output files, e.g. _n8_lr0.003')
+    ap.add_argument('--models', nargs='+', default=None)
+    ap.add_argument('--fast', action='store_true', help='ASR only (calibration)')
     a = ap.parse_args()
+    N_RELEARN, LR, TAG, FAST, ONLY = a.n, a.lr, a.tag, a.fast, a.models
     if a.summarize:
         summarize(a.summarize, a.seeds)
     else:
